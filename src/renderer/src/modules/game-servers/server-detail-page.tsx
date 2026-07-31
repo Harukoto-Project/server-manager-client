@@ -108,32 +108,36 @@ export function ServerDetailPage() {
 				)
 			}
 			inspector={
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-sm">コンソール</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<ConsoleLogViewer
-							lines={[]}
-							emptyLabel="リアルタイムコンソール(Wings WebSocket接続)は今後の実装予定です"
-						/>
-					</CardContent>
-				</Card>
+				server ? (
+					<>
+						<DetailField label="状態" value={<ServerStateBadge server={server} />} />
+						<DetailField label="識別子" value={<span className="break-all font-mono text-xs">{server.identifier}</span>} />
+						<DetailField label="メモリ上限" value={server.limits.memory > 0 ? `${server.limits.memory} MB` : "無制限"} />
+						<DetailField label="ディスク上限" value={server.limits.disk > 0 ? `${server.limits.disk} MB` : "無制限"} />
+						<DetailField label="CPU上限" value={server.limits.cpu > 0 ? `${server.limits.cpu}%` : "無制限"} />
+						<DetailField label="UUID" value={<span className="break-all font-mono text-xs">{server.uuid}</span>} />
+					</>
+				) : (
+					<p className="text-sm text-muted-foreground">情報を読み込み中です...</p>
+				)
 			}
 		>
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="mb-4 text-sm text-destructive">{actionError}</p>}
 
-			{server && (
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-					<DetailField label="状態" value={<ServerStateBadge server={server} />} />
-					<DetailField label="識別子" value={<span className="font-mono text-xs">{server.identifier}</span>} />
-					<DetailField label="メモリ上限" value={server.limits.memory > 0 ? `${server.limits.memory} MB` : "無制限"} />
-					<DetailField label="ディスク上限" value={server.limits.disk > 0 ? `${server.limits.disk} MB` : "無制限"} />
-					<DetailField label="CPU上限" value={server.limits.cpu > 0 ? `${server.limits.cpu}%` : "無制限"} />
-					<DetailField label="UUID" value={<span className="font-mono text-xs">{server.uuid}</span>} />
-				</div>
-			)}
+			<Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+				<CardHeader>
+					<CardTitle className="text-sm">コンソール</CardTitle>
+				</CardHeader>
+				<CardContent className="flex min-h-0 flex-1 flex-col pb-6">
+					<ConsoleLogViewer
+						fillHeight
+						className="h-full"
+						lines={[]}
+						emptyLabel="リアルタイムコンソール(Wings WebSocket接続)は今後の実装予定です"
+					/>
+				</CardContent>
+			</Card>
 		</DashboardPageLayout>
 	);
 }

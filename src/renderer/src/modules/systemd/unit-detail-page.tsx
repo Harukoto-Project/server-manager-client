@@ -128,30 +128,34 @@ export function UnitDetailPage() {
 				)
 			}
 			inspector={
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-sm">journalctl</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<ConsoleLogViewer
-							lines={logsQuery.data ?? []}
-							emptyLabel={logsQuery.isLoading ? "ログを取得中..." : "ログはまだありません"}
-						/>
-					</CardContent>
-				</Card>
+				unitInfo ? (
+					<>
+						<DetailField label="Active" value={<UnitStateBadge active={unitInfo.active} />} />
+						<DetailField label="Load" value={unitInfo.load || "—"} />
+						<DetailField label="Sub" value={unitInfo.sub || "—"} />
+						<DetailField label="Unit" value={<span className="break-all font-mono text-xs">{unitInfo.unit}</span>} />
+					</>
+				) : (
+					<p className="text-sm text-muted-foreground">情報を読み込み中です...</p>
+				)
 			}
 		>
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="mb-4 text-sm text-destructive">{actionError}</p>}
 
-			{unitInfo && (
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-					<DetailField label="Active" value={<UnitStateBadge active={unitInfo.active} />} />
-					<DetailField label="Load" value={unitInfo.load || "—"} />
-					<DetailField label="Sub" value={unitInfo.sub || "—"} />
-					<DetailField label="Unit" value={<span className="font-mono text-xs">{unitInfo.unit}</span>} />
-				</div>
-			)}
+			<Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+				<CardHeader>
+					<CardTitle className="text-sm">journalctl</CardTitle>
+				</CardHeader>
+				<CardContent className="flex min-h-0 flex-1 flex-col pb-6">
+					<ConsoleLogViewer
+						fillHeight
+						className="h-full"
+						lines={logsQuery.data ?? []}
+						emptyLabel={logsQuery.isLoading ? "ログを取得中..." : "ログはまだありません"}
+					/>
+				</CardContent>
+			</Card>
 		</DashboardPageLayout>
 	);
 }

@@ -46,32 +46,34 @@ export function ProjectDetailPage() {
 				)
 			}
 			inspector={
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-sm">コンソール</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<ConsoleLogViewer
-							lines={[]}
-							emptyLabel="WebSocket /process-manager/projects/:id/console 接続後にログが流れます"
+				project ? (
+					<>
+						<DetailField
+							label="状態"
+							value={<Badge variant={isRunning ? "success" : "secondary"}>{isRunning ? "稼働中" : "停止中"}</Badge>}
 						/>
-					</CardContent>
-				</Card>
+						<DetailField label="種別" value={project.kind} />
+						<DetailField label="作業ディレクトリ" value={<span className="break-all font-mono text-xs">{project.cwd}</span>} />
+						<DetailField label="起動コマンド" value={<span className="break-all font-mono text-xs">{project.command}</span>} />
+					</>
+				) : (
+					<p className="text-sm text-muted-foreground">プロジェクトが見つかりませんでした。</p>
+				)
 			}
 		>
-			{!project && <p className="mb-4 text-sm text-muted-foreground">プロジェクトが見つかりませんでした。</p>}
-
-			{project && (
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-					<DetailField
-						label="状態"
-						value={<Badge variant={isRunning ? "success" : "secondary"}>{isRunning ? "稼働中" : "停止中"}</Badge>}
+			<Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+				<CardHeader>
+					<CardTitle className="text-sm">コンソール</CardTitle>
+				</CardHeader>
+				<CardContent className="flex min-h-0 flex-1 flex-col pb-6">
+					<ConsoleLogViewer
+						fillHeight
+						className="h-full"
+						lines={[]}
+						emptyLabel="WebSocket /process-manager/projects/:id/console 接続後にログが流れます"
 					/>
-					<DetailField label="種別" value={project.kind} />
-					<DetailField label="作業ディレクトリ" value={<span className="font-mono text-xs">{project.cwd}</span>} />
-					<DetailField label="起動コマンド" value={<span className="font-mono text-xs">{project.command}</span>} />
-				</div>
-			)}
+				</CardContent>
+			</Card>
 		</DashboardPageLayout>
 	);
 }

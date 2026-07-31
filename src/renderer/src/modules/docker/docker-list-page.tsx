@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { EntityList, EntityListItem } from "@renderer/components/common/entity-list";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
+import { useContainerLabels } from "@renderer/hooks/use-container-labels";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
 import {
 	NodeApiError,
@@ -15,7 +16,7 @@ import {
 } from "@renderer/lib/node-api-client";
 import { formatBytes } from "@renderer/lib/utils";
 import { useNodesStore } from "@renderer/state/nodes-store";
-import { ContainerStateBadge, containerDisplayName } from "./shared";
+import { ContainerStateBadge, containerDisplayName, containerRealName } from "./shared";
 
 export function DockerListPage() {
 	const { nodeId } = useParams<{ nodeId: string }>();
@@ -25,6 +26,7 @@ export function DockerListPage() {
 
 	const [activeTab, setActiveTab] = useState("containers");
 	const ready = Boolean(node && token);
+	const { labels } = useContainerLabels(nodeId);
 
 	const containersQuery = useQuery({
 		queryKey: ["docker-containers", nodeId],
@@ -85,17 +87,20 @@ export function DockerListPage() {
 					)}
 					{containersQuery.data && containersQuery.data.length > 0 && (
 						<EntityList>
-							{containersQuery.data.map((container) => (
-								<EntityListItem
-									key={container.id}
-									icon={Container}
-									title={containerDisplayName(container)}
-									subtitle={container.image}
-									meta={container.status}
-									badge={<ContainerStateBadge state={container.state} />}
-									onClick={() => navigate(`containers/${container.id}`)}
-								/>
-							))}
+							{containersQuery.data.map((container) => {
+								const label = labels[container.id];
+								return (
+									<EntityListItem
+										key={container.id}
+										icon={Container}
+										title={containerDisplayName(container, label)}
+										subtitle={label ? `${containerRealName(container)} ・ ${container.image}` : container.image}
+										meta={container.status}
+										badge={<ContainerStateBadge state={container.state} />}
+										onClick={() => navigate(`containers/${container.id}`)}
+									/>
+								);
+							})}
 						</EntityList>
 					)}
 				</TabsContent>

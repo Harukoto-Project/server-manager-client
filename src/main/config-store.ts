@@ -17,6 +17,7 @@ const defaults: AppConfigSchema = {
 	},
 	lastSelectedNodeId: null,
 	nodes: [],
+	containerLabels: {},
 };
 
 /**

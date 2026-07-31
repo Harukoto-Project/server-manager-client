@@ -7,6 +7,8 @@ interface ConsoleLogViewerProps {
 	lines: string[];
 	className?: string;
 	emptyLabel?: string;
+	/** trueの場合、固定高さ(18rem)ではなく親要素いっぱいに広がる(詳細ページのメイン領域向け) */
+	fillHeight?: boolean;
 }
 
 /**
@@ -14,7 +16,12 @@ interface ConsoleLogViewerProps {
  * 自動追従スクロール + ユーザーが上にスクロールしたら追従を止めて
  * 「最新へ」ボタンを表示する(Apple Design適用方針に対応)。
  */
-export function ConsoleLogViewer({ lines, className, emptyLabel = "ログはまだありません" }: ConsoleLogViewerProps) {
+export function ConsoleLogViewer({
+	lines,
+	className,
+	emptyLabel = "ログはまだありません",
+	fillHeight = false,
+}: ConsoleLogViewerProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [following, setFollowing] = useState(true);
 
@@ -38,11 +45,14 @@ export function ConsoleLogViewer({ lines, className, emptyLabel = "ログはま�
 	}
 
 	return (
-		<div className={cn("relative rounded-lg border bg-black/90", className)}>
+		<div className={cn("relative rounded-lg border bg-black/90", fillHeight && "flex h-full flex-col", className)}>
 			<div
 				ref={containerRef}
 				onScroll={handleScroll}
-				className="no-scrollbar h-72 overflow-y-auto p-3 font-mono text-xs leading-relaxed text-emerald-300"
+				className={cn(
+					"no-scrollbar overflow-y-auto p-3 font-mono text-xs leading-relaxed text-emerald-300",
+					fillHeight ? "flex-1" : "h-72",
+				)}
 			>
 				{lines.length === 0 ? (
 					<p className="text-muted-foreground/70">{emptyLabel}</p>

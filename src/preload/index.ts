@@ -23,6 +23,10 @@ const api = {
 		removeNode: (nodeId: string): Promise<void> => ipcRenderer.invoke("config:remove-node", nodeId),
 		reorderNodes: (orderedIds: string[]): Promise<void> =>
 			ipcRenderer.invoke("config:reorder-nodes", orderedIds),
+		listContainerLabels: (nodeId: string): Promise<Record<string, string>> =>
+			ipcRenderer.invoke("config:list-container-labels", nodeId),
+		setContainerLabel: (nodeId: string, containerId: string, label: string): Promise<void> =>
+			ipcRenderer.invoke("config:set-container-label", nodeId, containerId, label),
 	},
 	secure: {
 		setToken: (nodeId: string, token: string): Promise<void> =>

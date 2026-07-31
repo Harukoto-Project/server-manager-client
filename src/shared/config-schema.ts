@@ -26,4 +26,6 @@ export interface AppConfigSchema {
 	};
 	lastSelectedNodeId: string | null;
 	nodes: NodeEntry[];
+	/** Dockerコンテナのカスタム表示名(ラベル)。キーは `${nodeId}:${containerId}` */
+	containerLabels: Record<string, string>;
 }

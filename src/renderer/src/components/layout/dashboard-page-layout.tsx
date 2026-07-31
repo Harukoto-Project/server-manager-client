@@ -52,10 +52,14 @@ export function DashboardPageLayout({
 				{actions && <div className="flex items-center gap-2">{actions}</div>}
 			</header>
 
-			<div className="flex-1 overflow-y-auto px-8 py-6">
-				<div className={cn("flex gap-6", inspector && "flex-col lg:flex-row")}>
-					<div className={cn("flex-1", className)}>{children}</div>
-					{inspector && <aside className="w-full shrink-0 lg:w-80">{inspector}</aside>}
+			<div className={cn("flex-1 px-8 py-6", inspector ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto")}>
+				<div className={cn("flex gap-6", inspector && "h-full flex-col lg:flex-row")}>
+					<div className={cn("flex-1", inspector && "flex flex-col lg:h-full lg:overflow-y-auto", className)}>
+						{children}
+					</div>
+					{inspector && (
+						<aside className="w-full shrink-0 space-y-4 lg:h-full lg:w-80 lg:overflow-y-auto">{inspector}</aside>
+					)}
 				</div>
 			</div>
 		</div>

@@ -36,12 +36,38 @@ export function registerIpcHandlers(ipcMain: IpcMain, config: ConfigStore, secur
 			config.get("nodes").filter((n) => n.id !== nodeId),
 		);
 		secureStore.delete(nodeId);
+		const prefix = `${nodeId}:`;
+		const remainingLabels = Object.fromEntries(
+			Object.entries(config.get("containerLabels")).filter(([key]) => !key.startsWith(prefix)),
+		);
+		config.set("containerLabels", remainingLabels);
 	});
 
 	ipcMain.handle("config:reorder-nodes", (_event, orderedIds: string[]) => {
 		const byId = new Map(config.get("nodes").map((n) => [n.id, n] as const));
 		const reordered = orderedIds.map((id) => byId.get(id)).filter((n): n is NodeEntry => Boolean(n));
 		config.set("nodes", reordered);
+	});
+
+	ipcMain.handle("config:list-container-labels", (_event, nodeId: string) => {
+		const prefix = `${nodeId}:`;
+		const all = config.get("containerLabels");
+		const result: Record<string, string> = {};
+		for (const [key, label] of Object.entries(all)) {
+			if (key.startsWith(prefix)) result[key.slice(prefix.length)] = label;
+		}
+		return result;
+	});
+
+	ipcMain.handle("config:set-container-label", (_event, nodeId: string, containerId: string, label: string) => {
+		const key = `${nodeId}:${containerId}`;
+		const all = { ...config.get("containerLabels") };
+		if (label.trim() === "") {
+			delete all[key];
+		} else {
+			all[key] = label.trim();
+		}
+		config.set("containerLabels", all);
 	});
 
 	ipcMain.handle("secure:set-token", (_event, nodeId: string, token: string) => {
