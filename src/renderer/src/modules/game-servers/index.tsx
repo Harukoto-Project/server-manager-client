@@ -1,15 +1,17 @@
 import { Gamepad2 } from "lucide-react";
-import { Route, Routes } from "react-router-dom";
+import { AnimatedModuleRoutes } from "@renderer/components/layout/animated-module-routes";
 import type { ModuleDefinition } from "@renderer/modules/types";
 import { ServerDetailPage } from "./server-detail-page";
 import { ServerListPage } from "./server-list-page";
 
 function GameServersRoutes() {
 	return (
-		<Routes>
-			<Route index element={<ServerListPage />} />
-			<Route path="servers/:identifier" element={<ServerDetailPage />} />
-		</Routes>
+		<AnimatedModuleRoutes
+			routes={[
+				{ index: true, element: <ServerListPage /> },
+				{ path: "servers/:identifier", element: <ServerDetailPage /> },
+			]}
+		/>
 	);
 }
 

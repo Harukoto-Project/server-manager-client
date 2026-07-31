@@ -1,15 +1,17 @@
 import { Network } from "lucide-react";
-import { Route, Routes } from "react-router-dom";
+import { AnimatedModuleRoutes } from "@renderer/components/layout/animated-module-routes";
 import type { ModuleDefinition } from "@renderer/modules/types";
 import { InterfaceDetailPage } from "./interface-detail-page";
 import { NetworkListPage } from "./network-list-page";
 
 function NetworkRoutes() {
 	return (
-		<Routes>
-			<Route index element={<NetworkListPage />} />
-			<Route path="interfaces/:name" element={<InterfaceDetailPage />} />
-		</Routes>
+		<AnimatedModuleRoutes
+			routes={[
+				{ index: true, element: <NetworkListPage /> },
+				{ path: "interfaces/:name", element: <InterfaceDetailPage /> },
+			]}
+		/>
 	);
 }
 

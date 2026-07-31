@@ -1,15 +1,17 @@
 import { Layers3 } from "lucide-react";
-import { Route, Routes } from "react-router-dom";
+import { AnimatedModuleRoutes } from "@renderer/components/layout/animated-module-routes";
 import type { ModuleDefinition } from "@renderer/modules/types";
 import { SystemdListPage } from "./systemd-list-page";
 import { UnitDetailPage } from "./unit-detail-page";
 
 function SystemdRoutes() {
 	return (
-		<Routes>
-			<Route index element={<SystemdListPage />} />
-			<Route path="units/:unit" element={<UnitDetailPage />} />
-		</Routes>
+		<AnimatedModuleRoutes
+			routes={[
+				{ index: true, element: <SystemdListPage /> },
+				{ path: "units/:unit", element: <UnitDetailPage /> },
+			]}
+		/>
 	);
 }
 

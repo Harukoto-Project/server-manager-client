@@ -1,15 +1,17 @@
 import { Terminal } from "lucide-react";
-import { Route, Routes } from "react-router-dom";
+import { AnimatedModuleRoutes } from "@renderer/components/layout/animated-module-routes";
 import type { ModuleDefinition } from "@renderer/modules/types";
 import { ProjectDetailPage } from "./project-detail-page";
 import { ProjectListPage } from "./project-list-page";
 
 function ProcessManagerRoutes() {
 	return (
-		<Routes>
-			<Route index element={<ProjectListPage />} />
-			<Route path=":projectId" element={<ProjectDetailPage />} />
-		</Routes>
+		<AnimatedModuleRoutes
+			routes={[
+				{ index: true, element: <ProjectListPage /> },
+				{ path: ":projectId", element: <ProjectDetailPage /> },
+			]}
+		/>
 	);
 }
 

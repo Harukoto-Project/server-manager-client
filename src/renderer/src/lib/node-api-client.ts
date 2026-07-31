@@ -149,8 +149,38 @@ export interface StorageIoSnapshot {
 	writeWaitPercent: number | null;
 }
 
+export type ProcessManagerProjectKind = "node" | "python" | "custom";
+export type ProcessManagerProjectStatus = "stopped" | "running" | "crashed";
+export type ProcessManagerAction = "start" | "stop" | "restart";
+
+export interface ProcessManagerProject {
+	id: string;
+	name: string;
+	kind: ProcessManagerProjectKind;
+	cwd: string;
+	command: string;
+	args: string[];
+	env: Record<string, string>;
+	autoStart: boolean;
+	status: ProcessManagerProjectStatus;
+}
+
+export interface RegisterProcessManagerProjectInput {
+	name: string;
+	kind: ProcessManagerProjectKind;
+	cwd: string;
+	command: string;
+	args?: string[];
+	env?: Record<string, string>;
+	autoStart?: boolean;
+}
+
 function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
+}
+
+function wsBaseUrl(node: NodeAddress): string {
+	return `ws://${node.host}:${node.port}`;
 }
 
 /**
@@ -388,4 +418,44 @@ export async function fetchStorageBlockDevices(node: NodeAddress, token: string)
 export async function fetchStorageIo(node: NodeAddress, token: string): Promise<StorageIoSnapshot> {
 	const response = await authorizedFetch(node, token, "/storage/io");
 	return response.json();
+}
+
+// --- プロセス管理(Node.js/Pythonプロジェクト) ---
+
+export async function fetchProcessManagerProjects(
+	node: NodeAddress,
+	token: string,
+): Promise<ProcessManagerProject[]> {
+	const response = await authorizedFetch(node, token, "/process-manager/projects");
+	const { projects } = (await response.json()) as { projects: ProcessManagerProject[] };
+	return projects;
+}
+
+export async function registerProcessManagerProject(
+	node: NodeAddress,
+	token: string,
+	input: RegisterProcessManagerProjectInput,
+): Promise<{ id: string }> {
+	const response = await authorizedFetch(node, token, "/process-manager/projects", {
+		method: "POST",
+		body: input,
+	});
+	return response.json();
+}
+
+export async function removeProcessManagerProject(node: NodeAddress, token: string, id: string): Promise<void> {
+	await authorizedFetch(node, token, `/process-manager/projects/${id}`, { method: "DELETE" });
+}
+
+export async function processManagerProjectAction(
+	node: NodeAddress,
+	token: string,
+	id: string,
+	action: ProcessManagerAction,
+): Promise<void> {
+	await authorizedFetch(node, token, `/process-manager/projects/${id}/${action}`, { method: "POST" });
+}
+
+export function buildProcessManagerConsoleUrl(node: NodeAddress, token: string, id: string): string {
+	return `${wsBaseUrl(node)}/process-manager/projects/${id}/console?token=${encodeURIComponent(token)}`;
 }

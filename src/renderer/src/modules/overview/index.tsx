@@ -1,5 +1,5 @@
 import { Activity } from "lucide-react";
-import { Route, Routes } from "react-router-dom";
+import { AnimatedModuleRoutes } from "@renderer/components/layout/animated-module-routes";
 import type { ModuleDefinition } from "@renderer/modules/types";
 import { CpuDetailPage } from "./cpu-detail-page";
 import { DiskDetailPage } from "./disk-detail-page";
@@ -9,13 +9,15 @@ import { OverviewListPage } from "./overview-list-page";
 
 function OverviewRoutes() {
 	return (
-		<Routes>
-			<Route index element={<OverviewListPage />} />
-			<Route path="cpu" element={<CpuDetailPage />} />
-			<Route path="memory" element={<MemoryDetailPage />} />
-			<Route path="disk" element={<DiskDetailPage />} />
-			<Route path="network" element={<NetworkDetailPage />} />
-		</Routes>
+		<AnimatedModuleRoutes
+			routes={[
+				{ index: true, element: <OverviewListPage /> },
+				{ path: "cpu", element: <CpuDetailPage /> },
+				{ path: "memory", element: <MemoryDetailPage /> },
+				{ path: "disk", element: <DiskDetailPage /> },
+				{ path: "network", element: <NetworkDetailPage /> },
+			]}
+		/>
 	);
 }
 
