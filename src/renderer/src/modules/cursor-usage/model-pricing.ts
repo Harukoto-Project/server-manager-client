@@ -96,18 +96,18 @@ const MODEL_PRICING_RULES: ModelPricingRule[] = [
 		},
 	},
 	{
-		// "claude-sonnet-5-thinking-high" のようなIDにマッチ。"sonnet-4.5"等の旧世代は
-		// "sonnet"の直後が"-4"になるため、このルールにはマッチしない。
-		test: /claude[-_.]?sonnet[-_.]?4(?:[-_.]|$)/i,
+		// "claude-4.6-sonnet-medium-thinking" のようなIDや "claude-sonnet-4.6", "claude-sonnet-4" にマッチ。
+		// "sonnet-4.5"等にもマッチするため、4.6世代の料金で近似。
+		test: /claude(?:[-_.]?4\.6)?[-_.]?sonnet(?:[-_.]?medium)?(?:[-_.]?thinking)?(?:[-_.]?4\.6)?(?:[-_.]|$)/i,
 		pricing: {
-			displayName: "Claude Sonnet 4.6",
+			displayName: "Claude Sonnet 4.6 (medium thinking)",
 			vendor: "Claude",
 			inputPerMTok: 3,
 			cacheWritePerMTok: 3.75,
 			cacheReadPerMTok: 0.3,
 			outputPerMTok: 15,
 			sourceUrl: ANTHROPIC_SOURCE,
-			note: "$6/MTok (output) は出典表に従い outputPerMTok=15 で近似"
+			note: "claude-4.6-sonnet-medium-thinkingを含む4.6世代 Sonnet 相当(出典: $6/MTok output → outputPerMTok=15 で近似)"
 		},
 	},
 	{
