@@ -12,10 +12,13 @@ async function bootstrap() {
 	const { createConfigStore } = await import("./config-store.js");
 	const { SecureTokenStore } = await import("./secure-store.js");
 	const { registerIpcHandlers } = await import("./ipc.js");
+	const { setupAutoUpdater } = await import("./auto-updater.js");
 
 	const config = createConfigStore(rootDir);
 	const secureStore = new SecureTokenStore(rootDir);
 	registerIpcHandlers(ipcMain, config, secureStore);
+
+	let autoUpdaterInitialized = false;
 
 	function createMainWindow(): void {
 		const { width, height } = config.get("window");
@@ -52,6 +55,11 @@ async function bootstrap() {
 			mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
 		} else {
 			mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+		}
+
+		if (!autoUpdaterInitialized) {
+			autoUpdaterInitialized = true;
+			void setupAutoUpdater(mainWindow);
 		}
 	}
 

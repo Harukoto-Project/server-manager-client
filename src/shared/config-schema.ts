@@ -11,6 +11,8 @@ export interface NodeEntry {
 	host: string;
 	port: number;
 	createdAt: string;
+	/** server-manager-apiのインストールパス(例: /opt/server-manager-api)。APIの自動更新に使用する */
+	apiInstallPath?: string;
 }
 
 export interface AppConfigSchema {

@@ -202,7 +202,7 @@ export class NodeApiError extends Error {
 	}
 }
 
-export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: string; time: string }> {
+export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: string; time: string; version?: string }> {
 	let response: Response;
 	try {
 		response = await fetch(`${baseUrl(node)}/health`);
@@ -218,6 +218,7 @@ export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: stri
 export interface AuthorizedFetchOptions {
 	method?: "GET" | "POST" | "DELETE";
 	body?: unknown;
+	signal?: AbortSignal;
 }
 
 export async function authorizedFetch(
@@ -235,6 +236,7 @@ export async function authorizedFetch(
 				...(options.body ? { "Content-Type": "application/json" } : {}),
 			},
 			body: options.body ? JSON.stringify(options.body) : undefined,
+			signal: options.signal,
 		});
 	} catch {
 		throw new NodeApiError("ノードに接続できません。ホスト/ポートやネットワーク(WireGuard等)を確認してください。");

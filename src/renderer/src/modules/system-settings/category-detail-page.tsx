@@ -5,6 +5,7 @@ import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-
 import { Card, CardContent } from "@renderer/components/ui/card";
 import { systemSettingsCategories } from "./categories";
 import { AdminPrivilegesPage } from "./pages/admin-privileges-page";
+import { ApiUpdatePage } from "./pages/api-update-page";
 import { AppPreferencesPage } from "./pages/app-preferences-page";
 import { AptUpdatesPage } from "./pages/apt-updates-page";
 import { AutoSecurityUpdatesPage } from "./pages/auto-security-updates-page";
@@ -44,6 +45,7 @@ const categoryComponents: Record<string, ComponentType> = {
 	"disk-mounts": DiskMountsPage,
 	"power-schedule": PowerSchedulePage,
 	"app-preferences": AppPreferencesPage,
+	"api-update": ApiUpdatePage,
 };
 
 function PlaceholderDetailPage() {

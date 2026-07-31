@@ -1,10 +1,24 @@
-import { Check, Monitor, Moon, PanelLeftClose, Sun, Waves } from "lucide-react";
-import { useEffect } from "react";
+import {
+	AlertCircle,
+	Check,
+	CheckCircle2,
+	DownloadCloud,
+	Info,
+	Loader2,
+	Monitor,
+	Moon,
+	PanelLeftClose,
+	RefreshCw,
+	Sun,
+	Waves,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Button } from "@renderer/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
 import { Switch } from "@renderer/components/ui/switch";
+import type { UpdaterEvent } from "../../../../../shared/updater-events";
 import { useAppPreferencesStore } from "@renderer/state/app-preferences-store";
 import { type ThemePreference, useTheme } from "@renderer/theme/theme-provider";
 
@@ -25,9 +39,31 @@ export function AppPreferencesPage() {
 	const { theme, setTheme } = useTheme();
 	const { preferences, loaded, load, update } = useAppPreferencesStore();
 
+	const [appVersion, setAppVersion] = useState<string | null>(null);
+	const [checking, setChecking] = useState(false);
+	const [updaterEvent, setUpdaterEvent] = useState<UpdaterEvent | null>(null);
+
 	useEffect(() => {
 		if (!loaded) void load();
 	}, [loaded, load]);
+
+	useEffect(() => {
+		void window.api.app.getVersion().then(setAppVersion);
+	}, []);
+
+	useEffect(() => {
+		const unsubscribe = window.api.updater.onEvent((event) => {
+			setUpdaterEvent(event);
+			if (event.type !== "checking-for-update") setChecking(false);
+		});
+		return unsubscribe;
+	}, []);
+
+	async function handleCheckForUpdates() {
+		setChecking(true);
+		setUpdaterEvent({ type: "checking-for-update" });
+		await window.api.updater.checkForUpdates();
+	}
 
 	const sidebarCollapsed = preferences?.sidebarCollapsed ?? false;
 	const reducedMotionOverride = preferences?.reducedMotionOverride ?? null;
@@ -102,6 +138,81 @@ export function AppPreferencesPage() {
 						<p className="mt-1 text-xs text-muted-foreground">
 							「常に減らす」を選ぶと、画面遷移やホバー時のアニメーションを最小限にします。
 						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2 text-sm">
+							<Info className="h-4 w-4" /> バージョン情報
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="flex flex-col gap-3">
+						<p className="text-sm text-muted-foreground">
+							アプリのバージョン: {appVersion ?? "取得中..."}
+						</p>
+
+						<Button
+							size="sm"
+							variant="outline"
+							className="w-fit"
+							disabled={checking}
+							onClick={handleCheckForUpdates}
+						>
+							{checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+							アップデートを確認
+						</Button>
+
+						{updaterEvent?.type === "checking-for-update" && (
+							<p className="text-xs text-muted-foreground">更新を確認しています...</p>
+						)}
+
+						{updaterEvent?.type === "update-not-available" && (
+							<div className="flex items-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+								<CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+								<span>お使いのバージョンは最新です(v{updaterEvent.version})。</span>
+							</div>
+						)}
+
+						{updaterEvent?.type === "update-available" && (
+							<div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+								<DownloadCloud className="h-3.5 w-3.5 shrink-0" />
+								<span>新しいバージョン(v{updaterEvent.version})が見つかりました。ダウンロードしています...</span>
+							</div>
+						)}
+
+						{updaterEvent?.type === "download-progress" && (
+							<div className="space-y-1">
+								<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+									<div
+										className="h-full rounded-full bg-primary transition-[width]"
+										style={{ width: `${Math.round(updaterEvent.percent)}%` }}
+									/>
+								</div>
+								<p className="text-xs text-muted-foreground">
+									ダウンロード中... {Math.round(updaterEvent.percent)}%
+								</p>
+							</div>
+						)}
+
+						{updaterEvent?.type === "update-downloaded" && (
+							<div className="flex flex-col gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+								<div className="flex items-center gap-2">
+									<CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+									<span>更新の準備が完了しました(v{updaterEvent.version})。</span>
+								</div>
+								<Button size="sm" className="w-fit" onClick={() => void window.api.updater.quitAndInstall()}>
+									今すぐ再起動して更新
+								</Button>
+							</div>
+						)}
+
+						{updaterEvent?.type === "error" && (
+							<div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+								<AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+								<span>更新の確認中にエラーが発生しました: {updaterEvent.message}</span>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			</div>

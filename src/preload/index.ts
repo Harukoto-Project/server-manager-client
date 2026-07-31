@@ -1,6 +1,8 @@
 import { electronAPI } from "@electron-toolkit/preload";
 import { contextBridge, ipcRenderer } from "electron";
+import type { IpcRendererEvent } from "electron";
 import type { AppConfigSchema, NodeEntry } from "../shared/config-schema.js";
+import type { UpdaterEvent } from "../shared/updater-events.js";
 
 /**
  * contextIsolation: true / nodeIntegration: false を前提としたブリッジAPI。
@@ -27,12 +29,23 @@ const api = {
 			ipcRenderer.invoke("config:list-container-labels", nodeId),
 		setContainerLabel: (nodeId: string, containerId: string, label: string): Promise<void> =>
 			ipcRenderer.invoke("config:set-container-label", nodeId, containerId, label),
+		updateNode: (nodeId: string, patch: Partial<Omit<NodeEntry, "id" | "createdAt">>): Promise<NodeEntry> =>
+			ipcRenderer.invoke("config:update-node", nodeId, patch),
 	},
 	secure: {
 		setToken: (nodeId: string, token: string): Promise<void> =>
 			ipcRenderer.invoke("secure:set-token", nodeId, token),
 		getToken: (nodeId: string): Promise<string | null> => ipcRenderer.invoke("secure:get-token", nodeId),
 		deleteToken: (nodeId: string): Promise<void> => ipcRenderer.invoke("secure:delete-token", nodeId),
+	},
+	updater: {
+		checkForUpdates: (): Promise<void> => ipcRenderer.invoke("updater:check-for-updates"),
+		quitAndInstall: (): Promise<void> => ipcRenderer.invoke("updater:quit-and-install"),
+		onEvent: (callback: (event: UpdaterEvent) => void): (() => void) => {
+			const listener = (_event: IpcRendererEvent, data: UpdaterEvent) => callback(data);
+			ipcRenderer.on("updater:event", listener);
+			return () => ipcRenderer.removeListener("updater:event", listener);
+		},
 	},
 };
 

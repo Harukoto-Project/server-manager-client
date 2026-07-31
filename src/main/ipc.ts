@@ -30,6 +30,20 @@ export function registerIpcHandlers(ipcMain: IpcMain, config: ConfigStore, secur
 		return entry;
 	});
 
+	ipcMain.handle(
+		"config:update-node",
+		(_event, nodeId: string, patch: Partial<Omit<NodeEntry, "id" | "createdAt">>) => {
+			const nodes = config.get("nodes");
+			const index = nodes.findIndex((n) => n.id === nodeId);
+			if (index === -1) return undefined;
+			const updated: NodeEntry = { ...nodes[index], ...patch };
+			const nextNodes = [...nodes];
+			nextNodes[index] = updated;
+			config.set("nodes", nextNodes);
+			return updated;
+		},
+	);
+
 	ipcMain.handle("config:remove-node", (_event, nodeId: string) => {
 		config.set(
 			"nodes",

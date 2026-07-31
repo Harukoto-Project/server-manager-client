@@ -1,5 +1,5 @@
 import { Reorder } from "framer-motion";
-import { AlertCircle, Loader2, Plus, Server } from "lucide-react";
+import { AlertCircle, Loader2, Pencil, Plus, Server } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConfirmDestructiveDialog } from "@renderer/components/common/confirm-destructive-dialog";
@@ -144,6 +144,120 @@ function AddNodeDialog() {
 	);
 }
 
+function EditNodeDialog({ node }: { node: NodeEntry }) {
+	const updateNode = useNodesStore((s) => s.updateNode);
+	const [open, setOpen] = useState(false);
+	const [name, setName] = useState(node.name);
+	const [host, setHost] = useState(node.host);
+	const [port, setPort] = useState(String(node.port));
+	const [apiInstallPath, setApiInstallPath] = useState(node.apiInstallPath ?? "");
+	const [saving, setSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	function resetFromNode() {
+		setName(node.name);
+		setHost(node.host);
+		setPort(String(node.port));
+		setApiInstallPath(node.apiInstallPath ?? "");
+		setError(null);
+	}
+
+	async function handleSubmit(event: React.FormEvent) {
+		event.preventDefault();
+		setError(null);
+		setSaving(true);
+		try {
+			await updateNode(node.id, {
+				name,
+				host,
+				port: Number(port),
+				apiInstallPath: apiInstallPath.trim() === "" ? undefined : apiInstallPath.trim(),
+			});
+			setOpen(false);
+		} catch {
+			setError("保存中に予期しないエラーが発生しました。");
+		} finally {
+			setSaving(false);
+		}
+	}
+
+	return (
+		<Dialog
+			open={open}
+			onOpenChange={(next) => {
+				setOpen(next);
+				if (!next) resetFromNode();
+			}}
+		>
+			<DialogTrigger asChild>
+				<Button size="sm" variant="ghost" onClick={(e) => e.stopPropagation()}>
+					<Pencil className="h-4 w-4" /> 編集
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>{node.name} を編集</DialogTitle>
+				</DialogHeader>
+				<form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+					<label className="flex flex-col gap-1 text-sm">
+						名前
+						<input
+							required
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+						/>
+					</label>
+					<label className="flex flex-col gap-1 text-sm">
+						ホスト (WireGuard内IP)
+						<input
+							required
+							value={host}
+							onChange={(e) => setHost(e.target.value)}
+							className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+						/>
+					</label>
+					<label className="flex flex-col gap-1 text-sm">
+						ポート
+						<input
+							required
+							value={port}
+							onChange={(e) => setPort(e.target.value)}
+							className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+						/>
+					</label>
+					<label className="flex flex-col gap-1 text-sm">
+						APIのインストールパス(任意)
+						<input
+							value={apiInstallPath}
+							onChange={(e) => setApiInstallPath(e.target.value)}
+							className="rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+							placeholder="例: /opt/server-manager-api"
+						/>
+						<span className="text-xs text-muted-foreground">
+							サーバー管理APIの自動更新機能で使用します。
+						</span>
+					</label>
+
+					{error && (
+						<div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+							<AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+							<span>{error}</span>
+						</div>
+					)}
+
+					<DialogFooter>
+						<Button type="submit" disabled={saving}>
+							{saving && <Loader2 className="h-4 w-4 animate-spin" />}
+							{saving ? "保存中..." : "保存する"}
+						</Button>
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 function NodeStatusBadge({ node }: { node: NodeEntry }) {
 	const { isLoading, isError } = useNodeHealth(node);
 	if (isLoading) return <Badge variant="secondary">確認中...</Badge>;
@@ -209,17 +323,20 @@ export function NodesPage() {
 								<span className="text-xs text-muted-foreground">
 									{node.host}:{node.port}
 								</span>
-								<ConfirmDestructiveDialog
-									trigger={
-										<Button size="sm" variant="ghost" onClick={(e) => e.stopPropagation()}>
-											削除
-										</Button>
-									}
-									title={`${node.name} を削除しますか?`}
-									description="登録情報とセッショントークンがこのPCから削除されます。ノード側の設定は変更されません。"
-									confirmLabel="削除する"
-									onConfirm={() => removeNode(node.id)}
-								/>
+								<div className="flex items-center gap-1">
+									<EditNodeDialog node={node} />
+									<ConfirmDestructiveDialog
+										trigger={
+											<Button size="sm" variant="ghost" onClick={(e) => e.stopPropagation()}>
+												削除
+											</Button>
+										}
+										title={`${node.name} を削除しますか?`}
+										description="登録情報とセッショントークンがこのPCから削除されます。ノード側の設定は変更されません。"
+										confirmLabel="削除する"
+										onConfirm={() => removeNode(node.id)}
+									/>
+								</div>
 							</CardContent>
 						</Card>
 					</Reorder.Item>

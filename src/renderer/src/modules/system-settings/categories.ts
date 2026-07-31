@@ -1,6 +1,7 @@
 import {
 	BookText,
 	Clock,
+	DownloadCloud,
 	Fingerprint,
 	Globe,
 	HardDrive,
@@ -204,5 +205,13 @@ export const systemSettingsCategories: SystemSettingsCategory[] = [
 		description: "このアプリ(サーバー管理画面)の見た目や動作に関する設定です。",
 		group: "app",
 		apiStatus: "none",
+	},
+	{
+		id: "api-update",
+		label: "サーバー管理アプリの更新",
+		icon: DownloadCloud,
+		description: "サーバー上で動くAPIプログラムを最新版に更新します。",
+		group: "maintenance",
+		apiStatus: "ready",
 	},
 ];
