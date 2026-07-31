@@ -47,8 +47,22 @@ src/renderer/src/modules/
 └─ process-manager/ # Node.js/Pythonプロジェクト管理
 ```
 
+## ノードへの接続(V1: アクセストークン方式)
+
+パスキー(WebAuthn)による認証はElectronの`file://`起源では正規のRP IDを持てないため、まずは共有アクセストークンによる暫定接続方式で実装している(`src/renderer/src/lib/node-api-client.ts`)。
+
+1. `server-manager-api`側を起動すると、初回のみアクセストークンが自動生成されログと `data/access-token.txt` に出力される(`.env`の`API_ACCESS_TOKEN`で固定値を指定することも可能)。
+2. クライアントの「ノードを追加」ダイアログで、ホスト・ポートに加えてこのアクセストークンを入力する。
+3. 送信すると `GET /health` で疎通確認 → 認証必須エンドポイントでトークン検証を行い、両方成功した場合のみノードを登録する。
+4. トークンはElectronの`safeStorage`(Windows DPAPI)で暗号化され、`config.yml`とは別ファイルに保存される。ノード削除時は自動的に破棄される。
+5. ノード一覧の接続バッジ、概要ページのCPU/メモリ/ディスク/ネットワークは、このトークンを使って`server-manager-api`から取得した実データを表示する(`use-node-health.ts` `use-node-access-token.ts`)。
+
+WebSocket(コンソールログ等)は、ブラウザ標準のWebSocket APIが独自ヘッダーを送れないため `?token=` クエリパラメータで同じアクセストークンを渡す仕様になっている(API側 `src/server.ts` 参照)。
+
+パスキー(WebAuthn)は`server-manager-api`側にAPIとして骨格は残っているが、上記の暫定方式からは呼び出しておらず、将来のノード個別登録機能として置き換え予定。
+
 ## 実装状況(スキャフォールド段階)
 
-- 各モジュールページは現状プレースホルダーデータで表示しており、`server-manager-api` への実接続(REST/WebSocket)は未実装(TODO)。
-- パスキー(WebAuthn)によるログイン画面は未実装。現状はノード一覧からそのまま各モジュールへ遷移できる。
+- Docker/systemd/system-settings/game-servers/process-managerの各モジュールページは現状プレースホルダーデータのままで、`server-manager-api` への実接続は未実装(概要ページのみ実データ接続済み、TODO)。
+- パスキー(WebAuthn)によるノード個別登録・ログイン画面は未実装(上記「ノードへの接続」参照)。
 - Apple Design適用: サイドメニューのspringインジケータ、ページ遷移のクロスフェード、ノードカードのドラッグ並び替え(`framer-motion` `Reorder`)、コンソールの自動追従スクロール、ボタンのpointerdownフィードバックを実装済み。

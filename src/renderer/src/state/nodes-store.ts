@@ -24,6 +24,7 @@ export const useNodesStore = create<NodesState>((set, get) => ({
 	},
 	async removeNode(nodeId) {
 		await window.api.config.removeNode(nodeId);
+		await window.api.secure.deleteToken(nodeId);
 		set({ nodes: get().nodes.filter((n) => n.id !== nodeId) });
 	},
 	async reorder(orderedIds) {
