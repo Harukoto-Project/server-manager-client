@@ -52,6 +52,18 @@ export interface SystemdUnit {
 
 export type SystemdUnitAction = "start" | "stop" | "restart" | "enable" | "disable";
 
+export interface GameServer {
+	identifier: string;
+	uuid: string;
+	name: string;
+	description: string | null;
+	status: string | null;
+	currentState: "running" | "starting" | "stopping" | "offline" | "unknown";
+	limits: { memory: number; disk: number; cpu: number };
+}
+
+export type GameServerPowerSignal = "start" | "stop" | "restart" | "kill";
+
 function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
 }
@@ -200,4 +212,24 @@ export async function fetchSystemdUnitLogs(node: NodeAddress, token: string, uni
 	const response = await authorizedFetch(node, token, `/systemd/units/${encodeURIComponent(unit)}/logs`);
 	const { logs } = (await response.json()) as { logs: string };
 	return logs.split("\n").filter((line) => line.length > 0);
+}
+
+// --- ゲームサーバー(Pterodactyl連携) ---
+
+export async function fetchGameServers(node: NodeAddress, token: string): Promise<GameServer[]> {
+	const response = await authorizedFetch(node, token, "/game-servers/servers");
+	const { servers } = (await response.json()) as { servers: GameServer[] };
+	return servers;
+}
+
+export async function gameServerPowerAction(
+	node: NodeAddress,
+	token: string,
+	identifier: string,
+	signal: GameServerPowerSignal,
+): Promise<void> {
+	await authorizedFetch(node, token, `/game-servers/servers/${identifier}/power`, {
+		method: "POST",
+		body: { signal },
+	});
 }
