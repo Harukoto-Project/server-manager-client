@@ -104,6 +104,51 @@ export interface NetworkConnection {
 	process: string;
 }
 
+export interface StorageFilesystem {
+	fs: string;
+	type: string;
+	mount: string;
+	sizeBytes: number;
+	usedBytes: number;
+	availableBytes: number;
+	usedPercent: number;
+	rw: boolean | null;
+}
+
+export interface StorageDisk {
+	device: string;
+	type: string;
+	name: string;
+	vendor: string;
+	sizeBytes: number;
+	interfaceType: string;
+	smartStatus: string;
+	temperatureCelsius: number | null;
+}
+
+export interface StorageBlockDevice {
+	name: string;
+	identifier: string;
+	type: string;
+	fsType: string;
+	mount: string;
+	sizeBytes: number;
+	physical: string;
+	uuid: string;
+	label: string;
+	model: string;
+	removable: boolean;
+}
+
+export interface StorageIoSnapshot {
+	timestamp: string;
+	readOpsPerSec: number | null;
+	writeOpsPerSec: number | null;
+	totalOpsPerSec: number | null;
+	readWaitPercent: number | null;
+	writeWaitPercent: number | null;
+}
+
 function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
 }
@@ -297,5 +342,30 @@ export async function fetchNetworkConnections(
 	token: string,
 ): Promise<{ connections: NetworkConnection[]; total: number }> {
 	const response = await authorizedFetch(node, token, "/network/connections");
+	return response.json();
+}
+
+// --- ストレージ詳細 ---
+
+export async function fetchStorageFilesystems(node: NodeAddress, token: string): Promise<StorageFilesystem[]> {
+	const response = await authorizedFetch(node, token, "/storage/filesystems");
+	const { filesystems } = (await response.json()) as { filesystems: StorageFilesystem[] };
+	return filesystems;
+}
+
+export async function fetchStorageDisks(node: NodeAddress, token: string): Promise<StorageDisk[]> {
+	const response = await authorizedFetch(node, token, "/storage/disks");
+	const { disks } = (await response.json()) as { disks: StorageDisk[] };
+	return disks;
+}
+
+export async function fetchStorageBlockDevices(node: NodeAddress, token: string): Promise<StorageBlockDevice[]> {
+	const response = await authorizedFetch(node, token, "/storage/block-devices");
+	const { devices } = (await response.json()) as { devices: StorageBlockDevice[] };
+	return devices;
+}
+
+export async function fetchStorageIo(node: NodeAddress, token: string): Promise<StorageIoSnapshot> {
+	const response = await authorizedFetch(node, token, "/storage/io");
 	return response.json();
 }

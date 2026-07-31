@@ -3,6 +3,7 @@ import { gameServersModule } from "./game-servers";
 import { networkModule } from "./network";
 import { overviewModule } from "./overview";
 import { processManagerModule } from "./process-manager";
+import { storageModule } from "./storage";
 import { systemSettingsModule } from "./system-settings";
 import { systemdModule } from "./systemd";
 import type { ModuleDefinition } from "./types";
@@ -17,6 +18,7 @@ export const moduleRegistry: ModuleDefinition[] = [
 	dockerModule,
 	systemdModule,
 	networkModule,
+	storageModule,
 	systemSettingsModule,
 	gameServersModule,
 	processManagerModule,
