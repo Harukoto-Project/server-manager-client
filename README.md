@@ -1,6 +1,6 @@
 # server-manager-client
 
-Harukoto Project Server Manager のWindows Electronクライアント。Notion の [Ubuntuサーバー管理ダッシュボード 機能計画](https://app.notion.com/p/3ae8a2263d6881d69879fc449a20f8be) の設計に基づく。
+Harukoto Project Server Manager のElectronクライアント(Windows / macOS対応)。Notion の [Ubuntuサーバー管理ダッシュボード 機能計画](https://app.notion.com/p/3ae8a2263d6881d69879fc449a20f8be) の設計に基づく。
 
 ## 技術スタック
 
@@ -72,6 +72,18 @@ WebSocket(コンソールログ等)は、ブラウザ標準のWebSocket APIが�
 4. パスワードはメモリ上でWebSocket送信に使うのみで、`config.yml`・`safeStorage`・ログ・監査ログのいずれにも保存されない。ログイン/切断イベントのみ`server-manager-api`側の監査ログに記録される。
 
 サーバー側で接続先ホスト/ポートを変更したい場合は`server-manager-api`の`.env`の`TERMINAL_SSH_HOST` / `TERMINAL_SSH_PORT`を設定する(デフォルトはノード自身の`127.0.0.1:22`)。
+
+## macOS対応ビルド
+
+`v*.*.*` タグをpushすると、GitHub Actions(`.github/workflows/release.yml`)がWindows/macOSの両OSでmatrixビルドを行い、GitHub Releasesにそれぞれの成果物を公開する。
+
+- macOS向けターゲットは `dmg`(配布用)と `zip`(`electron-updater`のSquirrel.Macによる自動更新に必須)を `x64` / `arm64` それぞれで生成する。
+- Apple Developer証明書が未設定のため、現状は**未署名(unsigned)ビルド**である(`electron-builder.yml`の`mac.identity: null`、CIの`CSC_IDENTITY_AUTO_DISCOVERY: false`)。ユーザーが起動する際はGatekeeperの警告が出るため、右クリック(または Control+クリック)→「開く」での起動が必要になる。
+- macOS用アプリアイコン(`build/icon.icns`)は未用意。現状Windows用の`.ico`も存在しないため、`electron-builder`のデフォルトElectronアイコンが使われる。独自アイコンを設定する場合は、1024x1024程度の元画像から`iconutil`(macOS)や`png2icons`等のツールで`build/icon.icns`(Windows向けは`build/icon.ico`)を生成し配置する。
+- 将来的に署名・公証(notarization)を行う場合は、以下の対応が追加で必要になる。
+  - Apple Developer Program登録・配布用証明書(Developer ID Application)の取得
+  - `electron-builder.yml`の`mac.identity`をnullから証明書名に変更(または削除)し、`mac.hardenedRuntime: true`・`mac.entitlements`等の設定を追加
+  - CIに`CSC_LINK`(証明書.p12のbase64)・`CSC_KEY_PASSWORD`・`APPLE_ID`・`APPLE_APP_SPECIFIC_PASSWORD`・`APPLE_TEAM_ID`をsecretsとして追加し、公証には`@electron/notarize`(electron-builderが自動連携)を利用する
 
 ## 実装状況(スキャフォールド段階)
 

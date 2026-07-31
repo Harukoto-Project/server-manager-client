@@ -2,7 +2,7 @@
   "name": "server-manager-client",
   "version": "1.0.0",
   "private": true,
-  "description": "Harukoto Project Server Manager - Windows Electronクライアント",
+  "description": "Harukoto Project Server Manager - Electronクライアント(Windows / macOS)",
   "author": "Harukoto Project",
   "main": "./out/main/index.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
-    "dist:win": "npm run build && electron-builder --win"
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
