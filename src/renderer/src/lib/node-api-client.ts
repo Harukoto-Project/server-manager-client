@@ -149,6 +149,11 @@ export interface StorageIoSnapshot {
 	writeWaitPercent: number | null;
 }
 
+export interface SystemSettingsBasics {
+	hostname: string;
+	timezone: string;
+}
+
 export type ProcessManagerProjectKind = "node" | "python" | "custom";
 export type ProcessManagerProjectStatus = "stopped" | "running" | "crashed";
 export type ProcessManagerAction = "start" | "stop" | "restart";
@@ -175,7 +180,7 @@ export interface RegisterProcessManagerProjectInput {
 	autoStart?: boolean;
 }
 
-function baseUrl(node: NodeAddress): string {
+export function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
 }
 
@@ -210,12 +215,12 @@ export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: stri
 	return response.json();
 }
 
-interface AuthorizedFetchOptions {
+export interface AuthorizedFetchOptions {
 	method?: "GET" | "POST" | "DELETE";
 	body?: unknown;
 }
 
-async function authorizedFetch(
+export async function authorizedFetch(
 	node: NodeAddress,
 	token: string,
 	path: string,
@@ -478,6 +483,25 @@ export async function processManagerProjectAction(
 
 export function buildProcessManagerConsoleUrl(node: NodeAddress, token: string, id: string): string {
 	return `${wsBaseUrl(node)}/process-manager/projects/${id}/console?token=${encodeURIComponent(token)}`;
+}
+
+// --- システム設定 ---
+
+export async function fetchSystemSettingsBasics(node: NodeAddress, token: string): Promise<SystemSettingsBasics> {
+	const response = await authorizedFetch(node, token, "/system-settings/basics");
+	return response.json();
+}
+
+export async function fetchSystemSettingsAptUpdates(node: NodeAddress, token: string): Promise<string[]> {
+	const response = await authorizedFetch(node, token, "/system-settings/apt/updates");
+	const { packages } = (await response.json()) as { packages: string[] };
+	return packages;
+}
+
+export async function fetchSystemSettingsUfwStatus(node: NodeAddress, token: string): Promise<string> {
+	const response = await authorizedFetch(node, token, "/system-settings/ufw/status");
+	const { status } = (await response.json()) as { status: string };
+	return status;
 }
 
 // --- Webターミナル ---
