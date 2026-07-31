@@ -44,7 +44,8 @@ src/renderer/src/modules/
 ├─ systemd/         # systemdサービス
 ├─ system-settings/ # apt・UFW・ユーザー等
 ├─ game-servers/    # Minecraft/ゲームサーバー(Pterodactyl連携)
-└─ process-manager/ # Node.js/Pythonプロジェクト管理
+├─ process-manager/ # Node.js/Pythonプロジェクト管理
+└─ terminal/        # Webターミナル(Linuxユーザーログイン + xterm.js)
 ```
 
 ## ノードへの接続(V1: アクセストークン方式)
@@ -61,8 +62,20 @@ WebSocket(コンソールログ等)は、ブラウザ標準のWebSocket APIが�
 
 パスキー(WebAuthn)は`server-manager-api`側にAPIとして骨格は残っているが、上記の暫定方式からは呼び出しておらず、将来のノード個別登録機能として置き換え予定。
 
+## Webターミナル(ノード上のLinuxユーザーでログイン)
+
+`terminal`モジュールは、共有アクセストークンによるノード接続(上記)とは別の、もう1段階のログイン画面を持つ。
+
+1. サイドメニューの「ターミナル」を開くと、まずユーザー名/パスワードの入力フォームが表示される。
+2. ログインすると、クライアントはWebSocket(`/terminal/session`)経由でノード自身のsshdへユーザー名/パスワードを送り、`server-manager-api`が`ssh2`クライアントとして`127.0.0.1`のsshdに接続する(認証・権限はLinux/PAM側にそのまま委ねる)。
+3. 認証に成功するとPTY(シェル)の入出力がWebSocketで中継され、`@xterm/xterm` + `@xterm/addon-fit`でブラウザ内に表示される。
+4. パスワードはメモリ上でWebSocket送信に使うのみで、`config.yml`・`safeStorage`・ログ・監査ログのいずれにも保存されない。ログイン/切断イベントのみ`server-manager-api`側の監査ログに記録される。
+
+サーバー側で接続先ホスト/ポートを変更したい場合は`server-manager-api`の`.env`の`TERMINAL_SSH_HOST` / `TERMINAL_SSH_PORT`を設定する(デフォルトはノード自身の`127.0.0.1:22`)。
+
 ## 実装状況(スキャフォールド段階)
 
-- Docker/systemd/system-settings/game-servers/process-managerの各モジュールページは現状プレースホルダーデータのままで、`server-manager-api` への実接続は未実装(概要ページのみ実データ接続済み、TODO)。
-- パスキー(WebAuthn)によるノード個別登録・ログイン画面は未実装(上記「ノードへの接続」参照)。
+- 概要/Docker/systemd/ネットワーク/ストレージ/game-servers/process-manager/terminalの各モジュールは`server-manager-api`への実接続まで完了。
+- system-settingsはまだプレースホルダー表示のみで、`server-manager-api`側のエンドポイントとの実接続は未実装(TODO)。
+- パスキー(WebAuthn)によるノード個別登録・ログイン画面は未実装(上記「ノードへの接続」参照)。ターミナルのログイン画面はLinuxユーザー認証であり、パスキーとは別物。
 - Apple Design適用: サイドメニューのspringインジケータ、ページ遷移のクロスフェード、ノードカードのドラッグ並び替え(`framer-motion` `Reorder`)、コンソールの自動追従スクロール、ボタンのpointerdownフィードバックを実装済み。

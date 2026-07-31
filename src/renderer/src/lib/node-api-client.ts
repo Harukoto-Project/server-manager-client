@@ -459,3 +459,9 @@ export async function processManagerProjectAction(
 export function buildProcessManagerConsoleUrl(node: NodeAddress, token: string, id: string): string {
 	return `${wsBaseUrl(node)}/process-manager/projects/${id}/console?token=${encodeURIComponent(token)}`;
 }
+
+// --- Webターミナル ---
+
+export function buildTerminalSessionUrl(node: NodeAddress, token: string): string {
+	return `${wsBaseUrl(node)}/terminal/session?token=${encodeURIComponent(token)}`;
+}

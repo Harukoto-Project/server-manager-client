@@ -6,6 +6,7 @@ import { processManagerModule } from "./process-manager";
 import { storageModule } from "./storage";
 import { systemSettingsModule } from "./system-settings";
 import { systemdModule } from "./systemd";
+import { terminalModule } from "./terminal";
 import type { ModuleDefinition } from "./types";
 
 /**
@@ -22,6 +23,7 @@ export const moduleRegistry: ModuleDefinition[] = [
 	systemSettingsModule,
 	gameServersModule,
 	processManagerModule,
+	terminalModule,
 ];
 
 export function getVisibleModules(): ModuleDefinition[] {
