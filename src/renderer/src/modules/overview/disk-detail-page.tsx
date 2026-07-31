@@ -1,18 +1,23 @@
 import { useMemo, useState } from "react";
+import { TimeRangeSelector } from "@renderer/components/common/time-range-selector";
 import { TimeSeriesChart } from "@renderer/components/common/time-series-chart";
 import { UsageBar } from "@renderer/components/common/usage-bar";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
+import { useMonitoringHistoryQuery } from "@renderer/hooks/use-monitoring-history-query";
 import { formatBytes } from "@renderer/lib/utils";
 import { useOverviewMonitoring } from "./use-overview-monitoring";
 
 export function DiskDetailPage() {
-	const { nodeId, snapshot, history, statusMessage } = useOverviewMonitoring();
+	const { nodeId, snapshot, statusMessage } = useOverviewMonitoring();
 	const disks = snapshot?.disks ?? [];
 
 	const [selectedMount, setSelectedMount] = useState<string | undefined>(undefined);
 	const activeMount = selectedMount ?? disks.find((d) => d.mount === "/")?.mount ?? disks[0]?.mount;
 	const activeDisk = disks.find((d) => d.mount === activeMount);
+
+	const [rangeMinutes, setRangeMinutes] = useState(60);
+	const { history, statusMessage: historyStatusMessage } = useMonitoringHistoryQuery(nodeId, rangeMinutes);
 
 	const chartData = useMemo(
 		() =>
@@ -36,18 +41,21 @@ export function DiskDetailPage() {
 
 			{activeDisk && (
 				<Card className="mb-4">
-					<CardHeader>
-						<CardTitle className="text-sm">
-							{activeDisk.mount} 使用率の推移(このページを開いている間の記録)
-						</CardTitle>
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+						<CardTitle className="text-sm">{activeDisk.mount} 使用率の推移(サーバーに記録された履歴)</CardTitle>
+						<TimeRangeSelector value={rangeMinutes} onChange={setRangeMinutes} />
 					</CardHeader>
 					<CardContent>
-						<TimeSeriesChart
-							data={chartData}
-							series={[{ key: "usedPercent", label: "使用率", color: "hsl(var(--primary))" }]}
-							yDomain={[0, 100]}
-							valueFormatter={(v) => `${v.toFixed(0)}%`}
-						/>
+						{historyStatusMessage && chartData.length === 0 ? (
+							<p className="text-sm text-muted-foreground">{historyStatusMessage}</p>
+						) : (
+							<TimeSeriesChart
+								data={chartData}
+								series={[{ key: "usedPercent", label: "使用率", color: "hsl(var(--primary))" }]}
+								yDomain={[0, 100]}
+								valueFormatter={(v) => `${v.toFixed(0)}%`}
+							/>
+						)}
 					</CardContent>
 				</Card>
 			)}

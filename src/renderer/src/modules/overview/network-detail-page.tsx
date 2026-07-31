@@ -1,15 +1,17 @@
 import { Network } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EntityList, EntityListItem } from "@renderer/components/common/entity-list";
+import { TimeRangeSelector } from "@renderer/components/common/time-range-selector";
 import { TimeSeriesChart } from "@renderer/components/common/time-series-chart";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
+import { useMonitoringHistoryQuery } from "@renderer/hooks/use-monitoring-history-query";
 import { formatBytes } from "@renderer/lib/utils";
 import { useOverviewMonitoring } from "./use-overview-monitoring";
 
 export function NetworkDetailPage() {
-	const { nodeId, snapshot, history, statusMessage } = useOverviewMonitoring();
+	const { nodeId, snapshot, statusMessage } = useOverviewMonitoring();
 	const interfaces = snapshot?.network ?? [];
 
 	const [selectedInterface, setSelectedInterface] = useState<string | undefined>(undefined);
@@ -18,6 +20,9 @@ export function NetworkDetailPage() {
 		interfaces.find((n) => n.rxBytesPerSec > 0 || n.txBytesPerSec > 0)?.interface ??
 		interfaces[0]?.interface;
 	const activeEntry = interfaces.find((n) => n.interface === activeInterface);
+
+	const [rangeMinutes, setRangeMinutes] = useState(60);
+	const { history, statusMessage: historyStatusMessage } = useMonitoringHistoryQuery(nodeId, rangeMinutes);
 
 	const chartData = useMemo(
 		() =>
@@ -56,20 +61,23 @@ export function NetworkDetailPage() {
 
 			{activeEntry && (
 				<Card className="mb-4">
-					<CardHeader>
-						<CardTitle className="text-sm">
-							{activeEntry.interface} 通信量の推移(このページを開いている間の記録)
-						</CardTitle>
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+						<CardTitle className="text-sm">{activeEntry.interface} 通信量の推移(サーバーに記録された履歴)</CardTitle>
+						<TimeRangeSelector value={rangeMinutes} onChange={setRangeMinutes} />
 					</CardHeader>
 					<CardContent>
-						<TimeSeriesChart
-							data={chartData}
-							series={[
-								{ key: "rx", label: "受信 (↓)", color: "hsl(var(--primary))" },
-								{ key: "tx", label: "送信 (↑)", color: "hsl(160 84% 39%)" },
-							]}
-							valueFormatter={(v) => `${formatBytes(v)}/s`}
-						/>
+						{historyStatusMessage && chartData.length === 0 ? (
+							<p className="text-sm text-muted-foreground">{historyStatusMessage}</p>
+						) : (
+							<TimeSeriesChart
+								data={chartData}
+								series={[
+									{ key: "rx", label: "受信 (↓)", color: "hsl(var(--primary))" },
+									{ key: "tx", label: "送信 (↑)", color: "hsl(160 84% 39%)" },
+								]}
+								valueFormatter={(v) => `${formatBytes(v)}/s`}
+							/>
+						)}
 					</CardContent>
 				</Card>
 			)}

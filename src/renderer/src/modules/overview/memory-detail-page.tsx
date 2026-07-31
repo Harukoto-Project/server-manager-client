@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { DetailField } from "@renderer/components/common/detail-field";
+import { TimeRangeSelector } from "@renderer/components/common/time-range-selector";
 import { TimeSeriesChart } from "@renderer/components/common/time-series-chart";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
+import { useMonitoringHistoryQuery } from "@renderer/hooks/use-monitoring-history-query";
 import { formatBytes } from "@renderer/lib/utils";
 import { useOverviewMonitoring } from "./use-overview-monitoring";
 
 export function MemoryDetailPage() {
-	const { nodeId, snapshot, history, statusMessage } = useOverviewMonitoring();
+	const { nodeId, snapshot, statusMessage } = useOverviewMonitoring();
+	const [rangeMinutes, setRangeMinutes] = useState(60);
+	const { history, statusMessage: historyStatusMessage } = useMonitoringHistoryQuery(nodeId, rangeMinutes);
 
 	const chartData = history.map((snap) => ({ timestamp: snap.timestamp, usedPercent: snap.memory.usedPercent }));
 
@@ -22,16 +27,21 @@ export function MemoryDetailPage() {
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 
 			<Card className="mb-4">
-				<CardHeader>
-					<CardTitle className="text-sm">使用率の推移(このページを開いている間の記録)</CardTitle>
+				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+					<CardTitle className="text-sm">使用率の推移(サーバーに記録された履歴)</CardTitle>
+					<TimeRangeSelector value={rangeMinutes} onChange={setRangeMinutes} />
 				</CardHeader>
 				<CardContent>
-					<TimeSeriesChart
-						data={chartData}
-						series={[{ key: "usedPercent", label: "メモリ使用率", color: "hsl(var(--primary))" }]}
-						yDomain={[0, 100]}
-						valueFormatter={(v) => `${v.toFixed(0)}%`}
-					/>
+					{historyStatusMessage && chartData.length === 0 ? (
+						<p className="text-sm text-muted-foreground">{historyStatusMessage}</p>
+					) : (
+						<TimeSeriesChart
+							data={chartData}
+							series={[{ key: "usedPercent", label: "メモリ使用率", color: "hsl(var(--primary))" }]}
+							yDomain={[0, 100]}
+							valueFormatter={(v) => `${v.toFixed(0)}%`}
+						/>
+					)}
 				</CardContent>
 			</Card>
 

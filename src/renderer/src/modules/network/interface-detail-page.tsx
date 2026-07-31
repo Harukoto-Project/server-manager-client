@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DetailField } from "@renderer/components/common/detail-field";
+import { TimeRangeSelector } from "@renderer/components/common/time-range-selector";
 import { TimeSeriesChart } from "@renderer/components/common/time-series-chart";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
+import { useMonitoringHistoryQuery } from "@renderer/hooks/use-monitoring-history-query";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
 import { useNodeMonitoring } from "@renderer/hooks/use-node-monitoring";
 import { NodeApiError, fetchNetworkInterfaces } from "@renderer/lib/node-api-client";
@@ -30,9 +32,12 @@ export function InterfaceDetailPage() {
 
 	const iface = interfacesQuery.data?.find((i) => i.name === name);
 
-	// スループットは既存のモニタリングAPI(概要ページと同じsummary)から同一インターフェース名で拾う
-	const { snapshot, history } = useNodeMonitoring();
+	// 現在のスループットは既存のモニタリングAPI(概要ページと同じsummary)から同一インターフェース名で拾う
+	const { snapshot } = useNodeMonitoring();
 	const throughput = snapshot?.network.find((n) => n.interface === name);
+
+	const [rangeMinutes, setRangeMinutes] = useState(60);
+	const { history, statusMessage: historyStatusMessage } = useMonitoringHistoryQuery(nodeId, rangeMinutes);
 	const chartData = useMemo(
 		() =>
 			history
@@ -65,18 +70,23 @@ export function InterfaceDetailPage() {
 
 			{throughput && (
 				<Card className="mb-4">
-					<CardHeader>
-						<CardTitle className="text-sm">通信量の推移(このページを開いている間の記録)</CardTitle>
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+						<CardTitle className="text-sm">通信量の推移(サーバーに記録された履歴)</CardTitle>
+						<TimeRangeSelector value={rangeMinutes} onChange={setRangeMinutes} />
 					</CardHeader>
 					<CardContent>
-						<TimeSeriesChart
-							data={chartData}
-							series={[
-								{ key: "rx", label: "受信 (↓)", color: "hsl(var(--primary))" },
-								{ key: "tx", label: "送信 (↑)", color: "hsl(160 84% 39%)" },
-							]}
-							valueFormatter={(v) => `${formatBytes(v)}/s`}
-						/>
+						{historyStatusMessage && chartData.length === 0 ? (
+							<p className="text-sm text-muted-foreground">{historyStatusMessage}</p>
+						) : (
+							<TimeSeriesChart
+								data={chartData}
+								series={[
+									{ key: "rx", label: "受信 (↓)", color: "hsl(var(--primary))" },
+									{ key: "tx", label: "送信 (↑)", color: "hsl(160 84% 39%)" },
+								]}
+								valueFormatter={(v) => `${formatBytes(v)}/s`}
+							/>
+						)}
 					</CardContent>
 				</Card>
 			)}

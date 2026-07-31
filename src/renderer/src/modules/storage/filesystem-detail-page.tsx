@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DetailField } from "@renderer/components/common/detail-field";
+import { TimeRangeSelector } from "@renderer/components/common/time-range-selector";
 import { TimeSeriesChart } from "@renderer/components/common/time-series-chart";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
+import { useMonitoringHistoryQuery } from "@renderer/hooks/use-monitoring-history-query";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
-import { useNodeMonitoring } from "@renderer/hooks/use-node-monitoring";
 import { NodeApiError, fetchStorageFilesystems } from "@renderer/lib/node-api-client";
 import { formatBytes } from "@renderer/lib/utils";
 import { useNodesStore } from "@renderer/state/nodes-store";
@@ -30,8 +31,9 @@ export function FilesystemDetailPage() {
 
 	const filesystem = filesystemsQuery.data?.find((fs) => fs.mount === mount);
 
-	// 使用率の推移は既存のモニタリングAPI(概要/ネットワークモジュールと同じsummary)の disks[] から拾う
-	const { history } = useNodeMonitoring();
+	// 使用率の推移はモニタリング履歴API(概要/ネットワークモジュールと同じ)の disks[] から拾う
+	const [rangeMinutes, setRangeMinutes] = useState(60);
+	const { history, statusMessage: historyStatusMessage } = useMonitoringHistoryQuery(nodeId, rangeMinutes);
 	const chartData = useMemo(
 		() =>
 			history
@@ -63,16 +65,21 @@ export function FilesystemDetailPage() {
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 
 			<Card className="mb-4">
-				<CardHeader>
-					<CardTitle className="text-sm">使用率の推移(このページを開いている間の記録)</CardTitle>
+				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+					<CardTitle className="text-sm">使用率の推移(サーバーに記録された履歴)</CardTitle>
+					<TimeRangeSelector value={rangeMinutes} onChange={setRangeMinutes} />
 				</CardHeader>
 				<CardContent>
-					<TimeSeriesChart
-						data={chartData}
-						series={[{ key: "usedPercent", label: "使用率", color: "hsl(var(--primary))" }]}
-						yDomain={[0, 100]}
-						valueFormatter={(v) => `${v.toFixed(0)}%`}
-					/>
+					{historyStatusMessage && chartData.length === 0 ? (
+						<p className="text-sm text-muted-foreground">{historyStatusMessage}</p>
+					) : (
+						<TimeSeriesChart
+							data={chartData}
+							series={[{ key: "usedPercent", label: "使用率", color: "hsl(var(--primary))" }]}
+							yDomain={[0, 100]}
+							valueFormatter={(v) => `${v.toFixed(0)}%`}
+						/>
+					)}
 				</CardContent>
 			</Card>
 

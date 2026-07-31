@@ -229,6 +229,26 @@ export async function fetchMonitoringSummary(node: NodeAddress, token: string): 
 	return response.json();
 }
 
+/**
+ * サーバー側(SQLite)に記録された過去のモニタリング履歴を取得する。
+ * クライアントの接続有無に関わらずAPI側が一定間隔で記録し続けているため、
+ * アプリを開き直しても過去の推移を確認できる。
+ */
+export async function fetchMonitoringHistory(
+	node: NodeAddress,
+	token: string,
+	rangeMinutes: number,
+	maxPoints = 300,
+): Promise<MonitoringSnapshot[]> {
+	const response = await authorizedFetch(
+		node,
+		token,
+		`/monitoring/history?rangeMinutes=${rangeMinutes}&maxPoints=${maxPoints}`,
+	);
+	const { samples } = (await response.json()) as { samples: MonitoringSnapshot[] };
+	return samples;
+}
+
 // --- Docker ---
 
 export async function fetchDockerContainers(node: NodeAddress, token: string): Promise<DockerContainer[]> {
