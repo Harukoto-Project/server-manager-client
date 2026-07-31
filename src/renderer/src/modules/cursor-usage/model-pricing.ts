@@ -96,6 +96,21 @@ const MODEL_PRICING_RULES: ModelPricingRule[] = [
 		},
 	},
 	{
+		// "claude-sonnet-5-thinking-high" のようなIDにマッチ。"sonnet-4.5"等の旧世代は
+		// "sonnet"の直後が"-4"になるため、このルールにはマッチしない。
+		test: /claude[-_.]?sonnet[-_.]?4(?:[-_.]|$)/i,
+		pricing: {
+			displayName: "Claude Sonnet 4.6",
+			vendor: "Claude",
+			inputPerMTok: 3,
+			cacheWritePerMTok: 3.75,
+			cacheReadPerMTok: 0.3,
+			outputPerMTok: 15,
+			sourceUrl: ANTHROPIC_SOURCE,
+			note: "$6/MTok (output) は出典表に従い outputPerMTok=15 で近似"
+		},
+	},
+	{
 		test: /claude[-_.]?sonnet/i,
 		pricing: {
 			displayName: "Claude Sonnet (3.5〜4.6系)",
