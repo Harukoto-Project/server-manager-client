@@ -134,7 +134,7 @@ export function ServerDetailPage() {
 						fillHeight
 						className="h-full"
 						lines={[]}
-						emptyLabel="リアルタイムコンソール(Wings WebSocket接続)は今後の実装予定です"
+						emptyLabel="リアルタイムコンソールは今後の実装予定です"
 					/>
 				</CardContent>
 			</Card>

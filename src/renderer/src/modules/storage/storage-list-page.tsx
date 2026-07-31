@@ -3,12 +3,13 @@ import { HardDrive, Layers, Server } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { EntityList, EntityListItem } from "@renderer/components/common/entity-list";
+import { TimeRangeSelector } from "@renderer/components/common/time-range-selector";
 import { TimeSeriesChart } from "@renderer/components/common/time-series-chart";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
-import { useStorageIoHistory } from "@renderer/hooks/use-storage-io-history";
+import { useStorageIoHistoryQuery } from "@renderer/hooks/use-storage-io-history-query";
 import {
 	NodeApiError,
 	fetchStorageBlockDevices,
@@ -58,7 +59,12 @@ export function StorageListPage() {
 		refetchInterval: 3000,
 		retry: 1,
 	});
-	const ioHistory = useStorageIoHistory(nodeId, ioQuery.data);
+
+	const [ioRangeMinutes, setIoRangeMinutes] = useState(60);
+	const { history: ioHistory, statusMessage: ioHistoryStatusMessage } = useStorageIoHistoryQuery(
+		nodeId,
+		ioRangeMinutes,
+	);
 	const ioChartData = ioHistory.map((snap) => ({
 		timestamp: snap.timestamp,
 		read: snap.readOpsPerSec ?? 0,
@@ -83,18 +89,23 @@ export function StorageListPage() {
 
 			{ioQuery.data && ioQuery.data.totalOpsPerSec !== null && (
 				<Card className="mb-4">
-					<CardHeader>
-						<CardTitle className="text-sm">ディスクI/Oの推移(全ディスク合計、このページを開いている間の記録)</CardTitle>
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+						<CardTitle className="text-sm">ディスクI/Oの推移(全ディスク合計)</CardTitle>
+						<TimeRangeSelector value={ioRangeMinutes} onChange={setIoRangeMinutes} />
 					</CardHeader>
 					<CardContent>
-						<TimeSeriesChart
-							data={ioChartData}
-							series={[
-								{ key: "read", label: "読み取り (IOPS)", color: "hsl(var(--primary))" },
-								{ key: "write", label: "書き込み (IOPS)", color: "hsl(160 84% 39%)" },
-							]}
-							valueFormatter={(v) => `${v.toFixed(0)}`}
-						/>
+						{ioHistoryStatusMessage && ioChartData.length === 0 ? (
+							<p className="text-sm text-muted-foreground">{ioHistoryStatusMessage}</p>
+						) : (
+							<TimeSeriesChart
+								data={ioChartData}
+								series={[
+									{ key: "read", label: "読み取り (IOPS)", color: "hsl(var(--primary))" },
+									{ key: "write", label: "書き込み (IOPS)", color: "hsl(160 84% 39%)" },
+								]}
+								valueFormatter={(v) => `${v.toFixed(0)}`}
+							/>
+						)}
 					</CardContent>
 				</Card>
 			)}

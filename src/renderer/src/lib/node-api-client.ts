@@ -149,6 +149,11 @@ export interface StorageIoSnapshot {
 	writeWaitPercent: number | null;
 }
 
+export interface SystemSettingsBasics {
+	hostname: string;
+	timezone: string;
+}
+
 export type ProcessManagerProjectKind = "node" | "python" | "custom";
 export type ProcessManagerProjectStatus = "stopped" | "running" | "crashed";
 export type ProcessManagerAction = "start" | "stop" | "restart";
@@ -175,7 +180,7 @@ export interface RegisterProcessManagerProjectInput {
 	autoStart?: boolean;
 }
 
-function baseUrl(node: NodeAddress): string {
+export function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
 }
 
@@ -210,12 +215,12 @@ export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: stri
 	return response.json();
 }
 
-interface AuthorizedFetchOptions {
+export interface AuthorizedFetchOptions {
 	method?: "GET" | "POST" | "DELETE";
 	body?: unknown;
 }
 
-async function authorizedFetch(
+export async function authorizedFetch(
 	node: NodeAddress,
 	token: string,
 	path: string,
@@ -420,6 +425,26 @@ export async function fetchStorageIo(node: NodeAddress, token: string): Promise<
 	return response.json();
 }
 
+/**
+ * サーバー側(SQLite)に記録された過去のディスクI/O履歴を取得する。
+ * `fetchMonitoringHistory`と同様、クライアントの接続有無に関わらずAPI側が一定間隔で記録し続けているため、
+ * アプリを開き直しても過去の推移を確認できる。
+ */
+export async function fetchStorageIoHistory(
+	node: NodeAddress,
+	token: string,
+	rangeMinutes: number,
+	maxPoints = 300,
+): Promise<StorageIoSnapshot[]> {
+	const response = await authorizedFetch(
+		node,
+		token,
+		`/storage/io/history?rangeMinutes=${rangeMinutes}&maxPoints=${maxPoints}`,
+	);
+	const { samples } = (await response.json()) as { samples: StorageIoSnapshot[] };
+	return samples;
+}
+
 // --- プロセス管理(Node.js/Pythonプロジェクト) ---
 
 export async function fetchProcessManagerProjects(
@@ -458,6 +483,25 @@ export async function processManagerProjectAction(
 
 export function buildProcessManagerConsoleUrl(node: NodeAddress, token: string, id: string): string {
 	return `${wsBaseUrl(node)}/process-manager/projects/${id}/console?token=${encodeURIComponent(token)}`;
+}
+
+// --- システム設定 ---
+
+export async function fetchSystemSettingsBasics(node: NodeAddress, token: string): Promise<SystemSettingsBasics> {
+	const response = await authorizedFetch(node, token, "/system-settings/basics");
+	return response.json();
+}
+
+export async function fetchSystemSettingsAptUpdates(node: NodeAddress, token: string): Promise<string[]> {
+	const response = await authorizedFetch(node, token, "/system-settings/apt/updates");
+	const { packages } = (await response.json()) as { packages: string[] };
+	return packages;
+}
+
+export async function fetchSystemSettingsUfwStatus(node: NodeAddress, token: string): Promise<string> {
+	const response = await authorizedFetch(node, token, "/system-settings/ufw/status");
+	const { status } = (await response.json()) as { status: string };
+	return status;
 }
 
 // --- Webターミナル ---

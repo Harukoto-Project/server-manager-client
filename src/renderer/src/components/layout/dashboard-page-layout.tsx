@@ -14,6 +14,11 @@ interface DashboardPageLayoutProps {
 	/** 指定すると見出しの上に「一覧に戻る」リンクを表示する(詳細ページ用) */
 	backTo?: string;
 	backLabel?: string;
+	/**
+	 * trueの場合、inspectorが無くてもchildrenをinspector同様のflex-full構造にし、
+	 * ページ全体をスクロールさせず本文側に高さいっぱいを割り当てる(ターミナル等の固定高さページ向け)
+	 */
+	fillHeight?: boolean;
 }
 
 /**
@@ -33,7 +38,10 @@ export function DashboardPageLayout({
 	className,
 	backTo,
 	backLabel = "一覧に戻る",
+	fillHeight = false,
 }: DashboardPageLayoutProps) {
+	const useFlexFull = Boolean(inspector) || fillHeight;
+
 	return (
 		<div className="flex h-full flex-col overflow-hidden">
 			<header className="glass-toolbar sticky top-0 z-10 flex flex-wrap items-start justify-between gap-4 px-8 py-5 shadow-[0_1px_0_0_hsl(var(--border)/0.5)]">
@@ -52,9 +60,9 @@ export function DashboardPageLayout({
 				{actions && <div className="flex items-center gap-2">{actions}</div>}
 			</header>
 
-			<div className={cn("flex-1 px-8 py-6", inspector ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto")}>
-				<div className={cn("flex gap-6", inspector && "h-full flex-col lg:flex-row")}>
-					<div className={cn("flex-1", inspector && "flex flex-col lg:h-full lg:overflow-y-auto", className)}>
+			<div className={cn("flex-1 px-8 py-6", useFlexFull ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto")}>
+				<div className={cn("flex gap-6", useFlexFull && "h-full flex-col lg:flex-row")}>
+					<div className={cn("flex-1", useFlexFull && "flex flex-col lg:h-full lg:overflow-y-auto", className)}>
 						{children}
 					</div>
 					{inspector && (

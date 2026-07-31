@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type ModuleGroup = "overview" | "operations" | "games" | "development" | "system";
+export type ModuleGroup = "overview" | "operations" | "games" | "development" | "system" | "tools";
 
 /**
  * サイドメニュー+ダッシュボードのページ/モジュールテンプレート化(Notion「UI/UXアーキテクチャ」対応)。
@@ -31,6 +31,14 @@ export const MODULE_GROUP_LABEL: Record<ModuleGroup, string> = {
 	games: "ゲームサーバー",
 	development: "開発プロジェクト",
 	system: "システム",
+	tools: "ツール",
 };
 
-export const MODULE_GROUP_ORDER: ModuleGroup[] = ["overview", "operations", "games", "development", "system"];
+export const MODULE_GROUP_ORDER: ModuleGroup[] = [
+	"overview",
+	"operations",
+	"games",
+	"development",
+	"system",
+	"tools",
+];

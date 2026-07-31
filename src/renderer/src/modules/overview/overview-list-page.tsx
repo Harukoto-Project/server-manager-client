@@ -18,7 +18,7 @@ export function OverviewListPage() {
 			label: "CPU使用率",
 			value: snapshot ? `${snapshot.cpu.loadPercent.toFixed(1)}%` : "—",
 			icon: Cpu,
-			hint: snapshot?.cpu.brand ?? "モニタリングAPI接続後に表示",
+			hint: snapshot?.cpu.brand ?? "接続後に表示",
 		},
 		{
 			id: "memory",
