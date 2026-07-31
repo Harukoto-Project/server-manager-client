@@ -12,6 +12,46 @@ export interface MonitoringSnapshot {
 	network: Array<{ interface: string; rxBytesPerSec: number; txBytesPerSec: number }>;
 }
 
+export interface DockerContainer {
+	id: string;
+	names: string[];
+	image: string;
+	state: string;
+	status: string;
+	ports: Array<{ IP?: string; PrivatePort?: number; PublicPort?: number; Type?: string }>;
+}
+
+export interface DockerImage {
+	id: string;
+	tags: string[] | null;
+	sizeBytes: number;
+}
+
+export interface DockerVolume {
+	name: string;
+	driver: string;
+	mountpoint: string;
+}
+
+export interface DockerNetwork {
+	id: string;
+	name: string;
+	driver: string;
+	scope: string;
+}
+
+export type DockerContainerAction = "start" | "stop" | "restart";
+
+export interface SystemdUnit {
+	unit: string;
+	load: string;
+	active: string;
+	sub: string;
+	description: string;
+}
+
+export type SystemdUnitAction = "start" | "stop" | "restart" | "enable" | "disable";
+
 function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
 }
@@ -43,11 +83,26 @@ export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: stri
 	return response.json();
 }
 
-async function authorizedFetch(node: NodeAddress, token: string, path: string): Promise<Response> {
+interface AuthorizedFetchOptions {
+	method?: "GET" | "POST" | "DELETE";
+	body?: unknown;
+}
+
+async function authorizedFetch(
+	node: NodeAddress,
+	token: string,
+	path: string,
+	options: AuthorizedFetchOptions = {},
+): Promise<Response> {
 	let response: Response;
 	try {
 		response = await fetch(`${baseUrl(node)}${path}`, {
-			headers: { Authorization: `Bearer ${token}` },
+			method: options.method ?? "GET",
+			headers: {
+				Authorization: `Bearer ${token}`,
+				...(options.body ? { "Content-Type": "application/json" } : {}),
+			},
+			body: options.body ? JSON.stringify(options.body) : undefined,
 		});
 	} catch {
 		throw new NodeApiError("ノードに接続できません。ホスト/ポートやネットワーク(WireGuard等)を確認してください。");
@@ -56,7 +111,14 @@ async function authorizedFetch(node: NodeAddress, token: string, path: string): 
 		throw new NodeApiError("アクセストークンが正しくありません。", 401);
 	}
 	if (!response.ok) {
-		throw new NodeApiError(`ノードからエラー応答がありました(HTTP ${response.status})`, response.status);
+		let message = `ノードからエラー応答がありました(HTTP ${response.status})`;
+		try {
+			const data = (await response.clone().json()) as { error?: string };
+			if (data.error) message = data.error;
+		} catch {
+			// レスポンスボディがJSONでない場合はデフォルトメッセージを使う
+		}
+		throw new NodeApiError(message, response.status);
 	}
 	return response;
 }
@@ -68,4 +130,74 @@ export async function verifyNodeAccessToken(node: NodeAddress, token: string): P
 export async function fetchMonitoringSummary(node: NodeAddress, token: string): Promise<MonitoringSnapshot> {
 	const response = await authorizedFetch(node, token, "/monitoring/summary");
 	return response.json();
+}
+
+// --- Docker ---
+
+export async function fetchDockerContainers(node: NodeAddress, token: string): Promise<DockerContainer[]> {
+	const response = await authorizedFetch(node, token, "/docker/containers");
+	return response.json();
+}
+
+export async function dockerContainerAction(
+	node: NodeAddress,
+	token: string,
+	containerId: string,
+	action: DockerContainerAction,
+): Promise<void> {
+	await authorizedFetch(node, token, `/docker/containers/${containerId}/action`, {
+		method: "POST",
+		body: { action },
+	});
+}
+
+export async function fetchDockerContainerLogs(
+	node: NodeAddress,
+	token: string,
+	containerId: string,
+): Promise<string[]> {
+	const response = await authorizedFetch(node, token, `/docker/containers/${containerId}/logs`);
+	const { logs } = (await response.json()) as { logs: string };
+	return logs.split("\n").filter((line) => line.length > 0);
+}
+
+export async function fetchDockerImages(node: NodeAddress, token: string): Promise<DockerImage[]> {
+	const response = await authorizedFetch(node, token, "/docker/images");
+	return response.json();
+}
+
+export async function fetchDockerVolumes(node: NodeAddress, token: string): Promise<DockerVolume[]> {
+	const response = await authorizedFetch(node, token, "/docker/volumes");
+	return response.json();
+}
+
+export async function fetchDockerNetworks(node: NodeAddress, token: string): Promise<DockerNetwork[]> {
+	const response = await authorizedFetch(node, token, "/docker/networks");
+	return response.json();
+}
+
+// --- systemd ---
+
+export async function fetchSystemdUnits(node: NodeAddress, token: string): Promise<SystemdUnit[]> {
+	const response = await authorizedFetch(node, token, "/systemd/units");
+	const { units } = (await response.json()) as { units: SystemdUnit[] };
+	return units;
+}
+
+export async function systemdUnitAction(
+	node: NodeAddress,
+	token: string,
+	unit: string,
+	action: SystemdUnitAction,
+): Promise<void> {
+	await authorizedFetch(node, token, `/systemd/units/${encodeURIComponent(unit)}/action`, {
+		method: "POST",
+		body: { action },
+	});
+}
+
+export async function fetchSystemdUnitLogs(node: NodeAddress, token: string, unit: string): Promise<string[]> {
+	const response = await authorizedFetch(node, token, `/systemd/units/${encodeURIComponent(unit)}/logs`);
+	const { logs } = (await response.json()) as { logs: string };
+	return logs.split("\n").filter((line) => line.length > 0);
 }

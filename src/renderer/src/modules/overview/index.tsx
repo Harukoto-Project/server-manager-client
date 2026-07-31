@@ -5,20 +5,9 @@ import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
 import { fetchMonitoringSummary } from "@renderer/lib/node-api-client";
+import { formatBytes } from "@renderer/lib/utils";
 import type { ModuleDefinition } from "@renderer/modules/types";
 import { useNodesStore } from "@renderer/state/nodes-store";
-
-function formatBytes(bytes: number): string {
-	if (!Number.isFinite(bytes)) return "—";
-	const units = ["B", "KB", "MB", "GB", "TB"];
-	let value = bytes;
-	let unitIndex = 0;
-	while (value >= 1024 && unitIndex < units.length - 1) {
-		value /= 1024;
-		unitIndex += 1;
-	}
-	return `${value.toFixed(1)} ${units[unitIndex]}`;
-}
 
 function OverviewPage() {
 	const { nodeId } = useParams<{ nodeId: string }>();
