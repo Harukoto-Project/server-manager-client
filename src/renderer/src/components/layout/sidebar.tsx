@@ -22,7 +22,7 @@ export function Sidebar() {
 
 	return (
 		<nav
-			className="flex h-full w-60 shrink-0 flex-col gap-1 border-r border-border/60 bg-sidebar/70 px-3 py-4 text-sidebar-foreground backdrop-blur-xl"
+			className="glass-panel flex h-full w-60 shrink-0 flex-col gap-1 border-r border-border/60 px-3 py-4 text-sidebar-foreground"
 			aria-label="サイドメニュー"
 		>
 			<button
@@ -52,7 +52,7 @@ export function Sidebar() {
 												<motion.span
 													layoutId="sidebar-active-indicator"
 													className="absolute inset-0 rounded-md bg-primary/12"
-													transition={{ type: "spring", damping: 30, stiffness: 400 }}
+													transition={{ type: "spring", bounce: 0, duration: 0.35 }}
 												/>
 											)}
 											<module.icon

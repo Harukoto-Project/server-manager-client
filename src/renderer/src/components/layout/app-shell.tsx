@@ -20,7 +20,7 @@ export function AppShell() {
 						initial={{ opacity: 0, y: 8 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -8 }}
-						transition={{ type: "spring", damping: 26, stiffness: 300 }}
+						transition={{ type: "spring", bounce: 0, duration: 0.4 }}
 						className="h-full"
 					>
 						<Outlet />

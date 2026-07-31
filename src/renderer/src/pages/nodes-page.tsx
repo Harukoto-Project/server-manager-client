@@ -127,6 +127,7 @@ export function NodesPage() {
 						value={node}
 						className="cursor-grab active:cursor-grabbing"
 						whileDrag={{ scale: 1.03, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}
+						transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
 					>
 						<Card onClick={() => navigate(`/nodes/${node.id}/overview`)}>
 							<CardHeader className="flex-row items-center justify-between space-y-0 pb-2">

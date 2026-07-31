@@ -74,6 +74,27 @@
 	}
 }
 
+/* apple-designスキル 14章: dark⇔lightのテーマ切替は瞬間的な明滅ではなく、なめらかにイーズする */
+body,
+.glass-panel,
+.glass-toolbar {
+	transition:
+		background-color 200ms ease,
+		color 200ms ease,
+		border-color 200ms ease;
+}
+
+/* apple-designスキル 12章: 半透明マテリアル。sidebarは構造的な領域なので重め、toolbarは軽めのブラー */
+.glass-panel {
+	background-color: hsl(var(--sidebar) / 0.7);
+	backdrop-filter: blur(24px) saturate(160%);
+}
+
+.glass-toolbar {
+	background-color: hsl(var(--background) / 0.72);
+	backdrop-filter: blur(16px) saturate(180%);
+}
+
 /* apple-designスキル 14章: reduced motion / reduced transparency / high contrast への追従 */
 @media (prefers-reduced-motion: reduce) {
 	*,
@@ -83,6 +104,29 @@
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.001ms !important;
 		scroll-behavior: auto !important;
+	}
+
+	body,
+	.glass-panel,
+	.glass-toolbar {
+		transition: none !important;
+	}
+}
+
+@media (prefers-reduced-transparency: reduce) {
+	.glass-panel,
+	.glass-toolbar {
+		background-color: hsl(var(--background));
+		backdrop-filter: none;
+	}
+}
+
+@media (prefers-contrast: more) {
+	.glass-panel,
+	.glass-toolbar {
+		background-color: hsl(var(--background));
+		backdrop-filter: none;
+		border-color: hsl(var(--foreground) / 0.4);
 	}
 }
 

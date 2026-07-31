@@ -64,7 +64,7 @@ export function ConsoleLogViewer({ lines, className, emptyLabel = "ログはま�
 						initial={{ opacity: 0, y: 8, scale: 0.9 }}
 						animate={{ opacity: 1, y: 0, scale: 1 }}
 						exit={{ opacity: 0, y: 8, scale: 0.9 }}
-						transition={{ type: "spring", damping: 20, stiffness: 300 }}
+						transition={{ type: "spring", bounce: 0.25, duration: 0.35 }}
 						className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-lg"
 					>
 						<ArrowDown className="h-3 w-3" /> 最新へ
