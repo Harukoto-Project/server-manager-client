@@ -37,7 +37,7 @@ export function ServerListPage() {
 	return (
 		<DashboardPageLayout
 			title="Minecraft / ゲームサーバー"
-			description="既存Pterodactylパネルの Application/Client API 経由で管理します。行をクリックするとサーバーの詳細ページに移動します。"
+			description="既存のPterodactylパネルでゲームサーバーを管理します。行をクリックするとサーバーの詳細ページに移動します。"
 		>
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 

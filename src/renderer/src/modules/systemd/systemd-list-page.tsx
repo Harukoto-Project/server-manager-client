@@ -45,7 +45,7 @@ export function SystemdListPage() {
 	return (
 		<DashboardPageLayout
 			title="systemdサービス"
-			description="行をクリックするとサービスの詳細ページ(起動/停止/再起動・有効化・journalログ)に移動します。"
+			description="行をクリックするとサービスの詳細ページ(起動/停止/再起動・有効化・ログ)に移動します。"
 			actions={
 				<input
 					value={filter}

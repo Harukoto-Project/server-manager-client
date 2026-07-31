@@ -145,7 +145,7 @@ export function UnitDetailPage() {
 
 			<Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
 				<CardHeader>
-					<CardTitle className="text-sm">journalctl</CardTitle>
+					<CardTitle className="text-sm">ログ</CardTitle>
 				</CardHeader>
 				<CardContent className="flex min-h-0 flex-1 flex-col pb-6">
 					<ConsoleLogViewer

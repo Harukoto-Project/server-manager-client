@@ -28,7 +28,7 @@ export function MemoryDetailPage() {
 
 			<Card className="mb-4">
 				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-					<CardTitle className="text-sm">使用率の推移(サーバーに記録された履歴)</CardTitle>
+					<CardTitle className="text-sm">使用率の推移</CardTitle>
 					<TimeRangeSelector value={rangeMinutes} onChange={setRangeMinutes} />
 				</CardHeader>
 				<CardContent>

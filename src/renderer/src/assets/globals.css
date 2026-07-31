@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ターミナル(xterm.js)用フォント。Hack -> Noto Sans Mono -> Source Code Pro -> OS標準の等幅フォントの順にフォールバックする */
+@font-face {
+	font-family: "Hack";
+	src: url("../../../../resources/fonts/Hack-Regular.ttf") format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Noto Sans Mono";
+	src: url("../../../../resources/fonts/NotoSansMono-Regular.ttf") format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Source Code Pro";
+	src: url("../../../../resources/fonts/SourceCodePro-Regular.ttf") format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
 @layer base {
 	:root {
 		--background: 0 0% 100%;
@@ -55,6 +80,21 @@
 
 	* {
 		@apply border-border;
+	}
+
+	/*
+	 * OS/ブラウザ標準のフォーカスアウトラインは環境によって色が変わり(Windowsでオレンジ色になる場合がある)、
+	 * デザインとも合わないため無効化し、代わりにinput/select/textareaはTailwindの--ringカラーによる
+	 * focus-visibleリングに統一する。button等の独自コンポーネントは各自でfocus-visible:ringを持つ。
+	 */
+	*:focus {
+		outline: none;
+	}
+
+	input,
+	select,
+	textarea {
+		@apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
 	}
 
 	html,

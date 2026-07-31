@@ -32,9 +32,7 @@ export function TerminalLoginForm({ disabled, pending, errorMessage, onSubmit }:
 			<Card className="w-full max-w-sm">
 				<CardHeader>
 					<CardTitle>ノードにログイン</CardTitle>
-					<CardDescription>
-						ノード上のLinuxユーザー名とパスワードでログインします。認証はノードのsshdが行い、パスワードはこのアプリには保存されません。
-					</CardDescription>
+					<CardDescription>ノード上のLinuxユーザー名とパスワードでログイン</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form className="space-y-3" onSubmit={handleSubmit}>

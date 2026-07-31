@@ -420,6 +420,26 @@ export async function fetchStorageIo(node: NodeAddress, token: string): Promise<
 	return response.json();
 }
 
+/**
+ * サーバー側(SQLite)に記録された過去のディスクI/O履歴を取得する。
+ * `fetchMonitoringHistory`と同様、クライアントの接続有無に関わらずAPI側が一定間隔で記録し続けているため、
+ * アプリを開き直しても過去の推移を確認できる。
+ */
+export async function fetchStorageIoHistory(
+	node: NodeAddress,
+	token: string,
+	rangeMinutes: number,
+	maxPoints = 300,
+): Promise<StorageIoSnapshot[]> {
+	const response = await authorizedFetch(
+		node,
+		token,
+		`/storage/io/history?rangeMinutes=${rangeMinutes}&maxPoints=${maxPoints}`,
+	);
+	const { samples } = (await response.json()) as { samples: StorageIoSnapshot[] };
+	return samples;
+}
+
 // --- プロセス管理(Node.js/Pythonプロジェクト) ---
 
 export async function fetchProcessManagerProjects(

@@ -116,7 +116,7 @@ export function NetworkListPage() {
 					<Card>
 						<CardContent className="py-4">
 							<p className="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Router className="h-4 w-4 text-muted-foreground" /> ルーティングテーブル(ip route)
+								<Router className="h-4 w-4 text-muted-foreground" /> ルーティングテーブル
 							</p>
 							{routesQuery.isLoading && <p className="text-sm text-muted-foreground">読み込み中...</p>}
 							{routesQuery.data?.routes.length === 0 && (
