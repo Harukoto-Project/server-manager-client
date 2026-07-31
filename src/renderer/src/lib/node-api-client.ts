@@ -64,6 +64,46 @@ export interface GameServer {
 
 export type GameServerPowerSignal = "start" | "stop" | "restart" | "kill";
 
+export interface NetworkInterfaceInfo {
+	name: string;
+	displayName: string;
+	isDefault: boolean;
+	ip4: string;
+	ip4subnet: string;
+	ip6: string;
+	ip6subnet: string;
+	mac: string;
+	internal: boolean;
+	virtual: boolean;
+	operstate: string;
+	type: string;
+	duplex: string;
+	mtu: number | null;
+	speedMbps: number | null;
+	dhcp: boolean;
+}
+
+export interface NetworkRoutesInfo {
+	gateway: string;
+	routes: string[];
+}
+
+export interface NetworkDnsInfo {
+	nameservers: string[];
+	raw: string;
+}
+
+export interface NetworkConnection {
+	protocol: string;
+	localAddress: string;
+	localPort: string;
+	peerAddress: string;
+	peerPort: string;
+	state: string;
+	pid: number;
+	process: string;
+}
+
 function baseUrl(node: NodeAddress): string {
 	return `http://${node.host}:${node.port}`;
 }
@@ -232,4 +272,30 @@ export async function gameServerPowerAction(
 		method: "POST",
 		body: { signal },
 	});
+}
+
+// --- ネットワーク詳細 ---
+
+export async function fetchNetworkInterfaces(node: NodeAddress, token: string): Promise<NetworkInterfaceInfo[]> {
+	const response = await authorizedFetch(node, token, "/network/interfaces");
+	const { interfaces } = (await response.json()) as { interfaces: NetworkInterfaceInfo[] };
+	return interfaces;
+}
+
+export async function fetchNetworkRoutes(node: NodeAddress, token: string): Promise<NetworkRoutesInfo> {
+	const response = await authorizedFetch(node, token, "/network/routes");
+	return response.json();
+}
+
+export async function fetchNetworkDns(node: NodeAddress, token: string): Promise<NetworkDnsInfo> {
+	const response = await authorizedFetch(node, token, "/network/dns");
+	return response.json();
+}
+
+export async function fetchNetworkConnections(
+	node: NodeAddress,
+	token: string,
+): Promise<{ connections: NetworkConnection[]; total: number }> {
+	const response = await authorizedFetch(node, token, "/network/connections");
+	return response.json();
 }

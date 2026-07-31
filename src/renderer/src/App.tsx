@@ -6,6 +6,8 @@ import { NodesPage } from "@renderer/pages/nodes-page";
 /**
  * ルーティング全体。ノード配下のページはmoduleRegistryから自動生成するため、
  * 新しいモジュールを追加してもこのファイルを変更する必要はない。
+ * 各モジュールのパスは `${module.id}/*` でマウントし、一覧ページの下に
+ * 専用の詳細ページ(例: docker/containers/:containerId)を持てるようにしている。
  */
 export function App() {
 	const modules = getVisibleModules();
@@ -17,7 +19,7 @@ export function App() {
 				<Route path="/nodes/:nodeId" element={<AppShell />}>
 					<Route index element={<Navigate to={modules[0]?.id ?? "overview"} replace />} />
 					{modules.map((module) => (
-						<Route key={module.id} path={module.id} element={<module.element />} />
+						<Route key={module.id} path={`${module.id}/*`} element={<module.element />} />
 					))}
 				</Route>
 			</Routes>

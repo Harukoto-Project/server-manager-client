@@ -7,7 +7,7 @@ const sections = [
 	{ title: "apt更新", icon: Settings, hint: "更新確認・適用・再起動リマインダー" },
 	{ title: "ユーザー/グループ", icon: Users, hint: "ローカルユーザー・グループ管理" },
 	{ title: "UFW", icon: ShieldCheck, hint: "ファイアウォールルールの編集" },
-	{ title: "ネットワーク", icon: Network, hint: "インターフェース/IP/DNS/ルート設定" },
+	{ title: "ネットワーク設定", icon: Network, hint: "IPアドレス/DNS等の変更(閲覧は「ネットワーク」ページ参照)" },
 	{ title: "cron/タイマー", icon: Timer, hint: "定期実行タスクの管理" },
 ];
 

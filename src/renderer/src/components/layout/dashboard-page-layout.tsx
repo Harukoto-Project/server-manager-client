@@ -1,14 +1,19 @@
+import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@renderer/lib/utils";
 
 interface DashboardPageLayoutProps {
 	title: string;
-	description?: string;
+	description?: ReactNode;
 	actions?: ReactNode;
 	/** 任意の右側インスペクタ領域。指定時は2カラムレイアウトになる */
 	inspector?: ReactNode;
 	children: ReactNode;
 	className?: string;
+	/** 指定すると見出しの上に「一覧に戻る」リンクを表示する(詳細ページ用) */
+	backTo?: string;
+	backLabel?: string;
 }
 
 /**
@@ -26,11 +31,21 @@ export function DashboardPageLayout({
 	inspector,
 	children,
 	className,
+	backTo,
+	backLabel = "一覧に戻る",
 }: DashboardPageLayoutProps) {
 	return (
 		<div className="flex h-full flex-col overflow-hidden">
 			<header className="glass-toolbar sticky top-0 z-10 flex flex-wrap items-start justify-between gap-4 px-8 py-5 shadow-[0_1px_0_0_hsl(var(--border)/0.5)]">
 				<div>
+					{backTo && (
+						<Link
+							to={backTo}
+							className="mb-1.5 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+						>
+							<ArrowLeft className="h-3.5 w-3.5" /> {backLabel}
+						</Link>
+					)}
 					<h1 className="text-2xl font-semibold tracking-tightest">{title}</h1>
 					{description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
 				</div>
