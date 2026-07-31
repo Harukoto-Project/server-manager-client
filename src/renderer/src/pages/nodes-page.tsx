@@ -1,5 +1,5 @@
 import { Reorder } from "framer-motion";
-import { Plus, Server } from "lucide-react";
+import { AlertCircle, Loader2, Plus, Server } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConfirmDestructiveDialog } from "@renderer/components/common/confirm-destructive-dialog";
@@ -15,26 +15,61 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@renderer/components/ui/dialog";
+import { useNodeHealth } from "@renderer/hooks/use-node-health";
+import { NodeApiError, fetchNodeHealth, verifyNodeAccessToken } from "@renderer/lib/node-api-client";
 import { useNodesStore } from "@renderer/state/nodes-store";
+import type { NodeEntry } from "../../../shared/config-schema";
 
 function AddNodeDialog() {
 	const addNode = useNodesStore((s) => s.addNode);
 	const [name, setName] = useState("");
 	const [host, setHost] = useState("");
 	const [port, setPort] = useState("8443");
+	const [token, setToken] = useState("");
 	const [open, setOpen] = useState(false);
+	const [checking, setChecking] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	async function handleSubmit(event: React.FormEvent) {
-		event.preventDefault();
-		await addNode({ name, host, port: Number(port) });
+	function reset() {
 		setName("");
 		setHost("");
 		setPort("8443");
-		setOpen(false);
+		setToken("");
+		setError(null);
+	}
+
+	async function handleSubmit(event: React.FormEvent) {
+		event.preventDefault();
+		setError(null);
+		setChecking(true);
+		try {
+			const address = { host, port: Number(port) };
+			// 1. まず疎通確認(認証不要の /health)
+			await fetchNodeHealth(address);
+			// 2. アクセストークンが正しいか確認(認証必須のエンドポイントで検証)
+			await verifyNodeAccessToken(address, token);
+
+			// 3. 両方成功したらノードを登録し、トークンはOSのセキュアストレージへ保存する
+			const created = await addNode({ name, ...address });
+			await window.api.secure.setToken(created.id, token);
+
+			reset();
+			setOpen(false);
+		} catch (err) {
+			setError(err instanceof NodeApiError ? err.message : "接続確認中に予期しないエラーが発生しました。");
+		} finally {
+			setChecking(false);
+		}
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog
+			open={open}
+			onOpenChange={(next) => {
+				setOpen(next);
+				if (!next) reset();
+			}}
+		>
 			<DialogTrigger asChild>
 				<Button>
 					<Plus className="h-4 w-4" /> ノードを追加
@@ -74,13 +109,46 @@ function AddNodeDialog() {
 							className="rounded-md border border-input bg-background px-3 py-2 text-sm"
 						/>
 					</label>
+					<label className="flex flex-col gap-1 text-sm">
+						アクセストークン
+						<input
+							required
+							type="password"
+							value={token}
+							onChange={(e) => setToken(e.target.value)}
+							className="rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+							placeholder="ノード側のログ / data/access-token.txt に出力されたトークン"
+						/>
+						<span className="text-xs text-muted-foreground">
+							server-manager-apiの起動ログ、または{" "}
+							<code className="rounded bg-muted px-1 py-0.5">data/access-token.txt</code> に出力されています。
+						</span>
+					</label>
+
+					{error && (
+						<div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+							<AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+							<span>{error}</span>
+						</div>
+					)}
+
 					<DialogFooter>
-						<Button type="submit">追加してパスキー登録へ</Button>
+						<Button type="submit" disabled={checking}>
+							{checking && <Loader2 className="h-4 w-4 animate-spin" />}
+							{checking ? "接続を確認中..." : "接続してノードを追加"}
+						</Button>
 					</DialogFooter>
 				</form>
 			</DialogContent>
 		</Dialog>
 	);
+}
+
+function NodeStatusBadge({ node }: { node: NodeEntry }) {
+	const { isLoading, isError } = useNodeHealth(node);
+	if (isLoading) return <Badge variant="secondary">確認中...</Badge>;
+	if (isError) return <Badge variant="destructive">未接続</Badge>;
+	return <Badge variant="success">接続済み</Badge>;
 }
 
 export function NodesPage() {
@@ -135,7 +203,7 @@ export function NodesPage() {
 									<Server className="h-4 w-4 text-muted-foreground" />
 									{node.name}
 								</CardTitle>
-								<Badge variant="secondary">未接続</Badge>
+								<NodeStatusBadge node={node} />
 							</CardHeader>
 							<CardContent className="flex items-center justify-between">
 								<span className="text-xs text-muted-foreground">

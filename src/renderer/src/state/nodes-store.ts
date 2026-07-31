@@ -5,7 +5,7 @@ interface NodesState {
 	nodes: NodeEntry[];
 	loaded: boolean;
 	load: () => Promise<void>;
-	addNode: (node: Omit<NodeEntry, "id" | "createdAt">) => Promise<void>;
+	addNode: (node: Omit<NodeEntry, "id" | "createdAt">) => Promise<NodeEntry>;
 	removeNode: (nodeId: string) => Promise<void>;
 	reorder: (orderedIds: string[]) => Promise<void>;
 }
@@ -20,6 +20,7 @@ export const useNodesStore = create<NodesState>((set, get) => ({
 	async addNode(node) {
 		const created = await window.api.config.addNode(node);
 		set({ nodes: [...get().nodes, created] });
+		return created;
 	},
 	async removeNode(nodeId) {
 		await window.api.config.removeNode(nodeId);

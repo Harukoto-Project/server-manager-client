@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { useNodesStore } from "@renderer/state/nodes-store";
 import { Sidebar } from "./sidebar";
 
 /**
@@ -9,6 +11,13 @@ import { Sidebar } from "./sidebar";
  */
 export function AppShell() {
 	const location = useLocation();
+	const { loaded, load } = useNodesStore();
+
+	// NodesPageを経由せず直接 /nodes/:id/... へ遷移した場合(再読み込み等)でも
+	// ノード一覧をロードしておく(overviewページ等がノード情報を必要とするため)。
+	useEffect(() => {
+		if (!loaded) void load();
+	}, [loaded, load]);
 
 	return (
 		<div className="flex h-screen w-screen overflow-hidden bg-background">

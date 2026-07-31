@@ -2,10 +2,12 @@
 <html lang="ja">
 	<head>
 		<meta charset="UTF-8" />
-		<meta
-			http-equiv="Content-Security-Policy"
-			content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: wss: ws:;"
-		/>
+		<!--
+			CSPはここではなくメインプロセス側(src/main/index.ts)で、
+			開発時(Vite Dev Server + React Refresh)と本番ビルドで別々の内容をレスポンスヘッダーとして付与する。
+			ここに固定のCSP metaタグを置くと、開発時にReact Refreshのインラインスクリプトがブロックされ、
+			画面が真っ黒になる(root要素へのレンダリングが失敗する)ため置かない。
+		-->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Server Manager</title>
 	</head>
