@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Button } from "@renderer/components/ui/button";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
@@ -11,7 +11,6 @@ import { useNodesStore } from "@renderer/state/nodes-store";
 export function FileEditorPage() {
 	const { nodeId } = useParams<{ nodeId: string }>();
 	const [searchParams] = useSearchParams();
-	const navigate = useNavigate();
 	const filePath = searchParams.get("path") ?? "";
 	const node = useNodesStore((s) => s.nodes.find((n) => n.id === nodeId));
 	const { data: token, isLoading: tokenLoading } = useNodeAccessToken(nodeId);

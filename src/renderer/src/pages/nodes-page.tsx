@@ -16,16 +16,16 @@ import {
 	DialogTrigger,
 } from "@renderer/components/ui/dialog";
 import { useNodeHealth } from "@renderer/hooks/use-node-health";
-import { NodeApiError, fetchNodeHealth, verifyNodeAccessToken } from "@renderer/lib/node-api-client";
+import { NodeApiError, fetchNodeHealth } from "@renderer/lib/node-api-client";
 import { useNodesStore } from "@renderer/state/nodes-store";
 import type { NodeEntry } from "../../../shared/config-schema";
 
 function AddNodeDialog() {
 	const addNode = useNodesStore((s) => s.addNode);
+	const navigate = useNavigate();
 	const [name, setName] = useState("");
 	const [host, setHost] = useState("");
 	const [port, setPort] = useState("8443");
-	const [token, setToken] = useState("");
 	const [open, setOpen] = useState(false);
 	const [checking, setChecking] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,6 @@ function AddNodeDialog() {
 		setName("");
 		setHost("");
 		setPort("8443");
-		setToken("");
 		setError(null);
 	}
 
@@ -44,17 +43,11 @@ function AddNodeDialog() {
 		setChecking(true);
 		try {
 			const address = { host, port: Number(port) };
-			// 1. まず疎通確認(認証不要の /health)
 			await fetchNodeHealth(address);
-			// 2. アクセストークンが正しいか確認(認証必須のエンドポイントで検証)
-			await verifyNodeAccessToken(address, token);
-
-			// 3. 両方成功したらノードを登録し、トークンはOSのセキュアストレージへ保存する
 			const created = await addNode({ name, ...address });
-			await window.api.secure.setToken(created.id, token);
-
 			reset();
 			setOpen(false);
+			navigate(`/nodes/${created.id}/overview`);
 		} catch (err) {
 			setError(err instanceof NodeApiError ? err.message : "接続確認中に予期しないエラーが発生しました。");
 		} finally {
@@ -109,21 +102,9 @@ function AddNodeDialog() {
 							className="rounded-md border border-input bg-background px-3 py-2 text-sm"
 						/>
 					</label>
-					<label className="flex flex-col gap-1 text-sm">
-						アクセストークン
-						<input
-							required
-							type="password"
-							value={token}
-							onChange={(e) => setToken(e.target.value)}
-							className="rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-							placeholder="ノード側のログ / data/access-token.txt に出力されたトークン"
-						/>
-						<span className="text-xs text-muted-foreground">
-							server-manager-apiの起動ログ、または{" "}
-							<code className="rounded bg-muted px-1 py-0.5">data/access-token.txt</code> に出力されています。
-						</span>
-					</label>
+					<p className="text-xs text-muted-foreground">
+						疎通確認後、パスキー認証画面に移動します。
+					</p>
 
 					{error && (
 						<div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">

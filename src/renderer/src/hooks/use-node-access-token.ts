@@ -1,11 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@renderer/state/auth-store";
 
-/** ノードのアクセストークンをOSのセキュアストレージ(Electron safeStorage)経由で取得する */
+/** ノードのJWTセッショントークンをauth-storeから取得する */
 export function useNodeAccessToken(nodeId: string | undefined) {
-	return useQuery({
-		queryKey: ["node-token", nodeId],
-		queryFn: () => window.api.secure.getToken(nodeId as string),
-		enabled: Boolean(nodeId),
-		staleTime: Number.POSITIVE_INFINITY,
-	});
+	const getToken = useAuthStore((s) => s.getToken);
+	const token = nodeId ? getToken(nodeId) : null;
+	return { data: token, isLoading: false };
 }

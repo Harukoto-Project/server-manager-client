@@ -215,6 +215,125 @@ export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: stri
 	return response.json();
 }
 
+export interface AuthStatus {
+	registrationEnabled: boolean;
+	passkeyCount: number;
+}
+
+export async function fetchAuthStatus(node: NodeAddress): Promise<AuthStatus> {
+	let response: Response;
+	try {
+		response = await fetch(`${baseUrl(node)}/auth/status`);
+	} catch {
+		throw new NodeApiError("ノードに接続できません。");
+	}
+	if (!response.ok) throw new NodeApiError(`HTTP ${response.status}`);
+	return response.json();
+}
+
+export async function fetchLoginOptions(node: NodeAddress): Promise<unknown> {
+	let response: Response;
+	try {
+		response = await fetch(`${baseUrl(node)}/auth/login/options`);
+	} catch {
+		throw new NodeApiError("ノードに接続できません。");
+	}
+	if (!response.ok) {
+		const data = (await response.clone().json().catch(() => ({}))) as { error?: string };
+		throw new NodeApiError(data.error ?? `HTTP ${response.status}`, response.status);
+	}
+	return response.json();
+}
+
+export async function verifyLogin(
+	node: NodeAddress,
+	authResponse: unknown,
+): Promise<{ token: string; expiresInMinutes: number }> {
+	let response: Response;
+	try {
+		response = await fetch(`${baseUrl(node)}/auth/login/verify`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ response: authResponse }),
+		});
+	} catch {
+		throw new NodeApiError("ノードに接続できません。");
+	}
+	if (!response.ok) {
+		const data = (await response.clone().json().catch(() => ({}))) as { error?: string };
+		throw new NodeApiError(data.error ?? `HTTP ${response.status}`, response.status);
+	}
+	return response.json();
+}
+
+export async function fetchRegisterOptions(node: NodeAddress): Promise<unknown> {
+	let response: Response;
+	try {
+		response = await fetch(`${baseUrl(node)}/auth/register/options`);
+	} catch {
+		throw new NodeApiError("ノードに接続できません。");
+	}
+	if (!response.ok) {
+		const data = (await response.clone().json().catch(() => ({}))) as { error?: string };
+		throw new NodeApiError(data.error ?? `HTTP ${response.status}`, response.status);
+	}
+	return response.json();
+}
+
+export async function verifyRegistration(
+	node: NodeAddress,
+	regResponse: unknown,
+): Promise<{ verified: boolean; recoveryCode?: string }> {
+	let response: Response;
+	try {
+		response = await fetch(`${baseUrl(node)}/auth/register/verify`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ response: regResponse }),
+		});
+	} catch {
+		throw new NodeApiError("ノードに接続できません。");
+	}
+	if (!response.ok) {
+		const data = (await response.clone().json().catch(() => ({}))) as { error?: string };
+		throw new NodeApiError(data.error ?? `HTTP ${response.status}`, response.status);
+	}
+	return response.json();
+}
+
+export async function fetchRecoverOptions(node: NodeAddress, code: string): Promise<unknown> {
+	let response: Response;
+	try {
+		response = await fetch(`${baseUrl(node)}/auth/recover`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ code }),
+		});
+	} catch {
+		throw new NodeApiError("ノードに接続できません。");
+	}
+	if (!response.ok) {
+		const data = (await response.clone().json().catch(() => ({}))) as { error?: string };
+		throw new NodeApiError(data.error ?? `HTTP ${response.status}`, response.status);
+	}
+	return response.json();
+}
+
+export function decodeJwtExp(token: string): number | null {
+	try {
+		const payload = JSON.parse(atob(token.split(".")[1]));
+		return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+	} catch {
+		return null;
+	}
+}
+
+export function isTokenExpired(token: string): boolean {
+	const exp = decodeJwtExp(token);
+	if (exp === null) return true;
+	return exp <= Date.now();
+}
+
 export interface AuthorizedFetchOptions {
 	method?: "GET" | "POST" | "DELETE";
 	body?: unknown;
@@ -257,7 +376,7 @@ export async function authorizedFetch(
 	return response;
 }
 
-export async function verifyNodeAccessToken(node: NodeAddress, token: string): Promise<void> {
+export async function verifyNodeSession(node: NodeAddress, token: string): Promise<void> {
 	await authorizedFetch(node, token, "/monitoring/summary");
 }
 

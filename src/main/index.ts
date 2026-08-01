@@ -1,14 +1,16 @@
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import { BrowserWindow, app, ipcMain, session, shell } from "electron";
+import { BrowserWindow, app, ipcMain, net, protocol, session, shell } from "electron";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { consolidateAppPaths } from "./paths.js";
 
-// app.whenReady() より前に必ず呼び出し、ユーザーデータ/キャッシュ/ログ/クラッシュダンプの
-// 保存先を %APPDATA%\Harukoto Project\Server Manager 配下に一本化する。
 const rootDir = consolidateAppPaths();
 
+protocol.registerSchemesAsPrivileged([
+	{ scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
+]);
+
 async function bootstrap() {
-	// 動的importにしているのは、consolidateAppPathsの後でelectron-store系のパス解決を行うため
 	const { createConfigStore } = await import("./config-store.js");
 	const { SecureTokenStore } = await import("./secure-store.js");
 	const { registerIpcHandlers } = await import("./ipc.js");
@@ -55,7 +57,7 @@ async function bootstrap() {
 		if (is.dev && process.env.ELECTRON_RENDERER_URL) {
 			mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
 		} else {
-			mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+			mainWindow.loadURL("app://server-manager/index.html");
 		}
 
 		if (!autoUpdaterInitialized) {
@@ -67,14 +69,22 @@ async function bootstrap() {
 	app.whenReady().then(() => {
 		electronApp.setAppUserModelId("com.harukoto-project.server-manager");
 
-		// CSPを設定し外部スクリプトの読み込みを禁止する(Notion「Electron(Windows側)の堅牢化」対応)。
-		// 開発時はVite Dev Server + React Refreshがインラインスクリプト/evalを必要とするため緩め、
-		// 本番ビルド(file://で読み込む静的アセットのみ)では厳格なCSPを適用する。
-		// connect-src の http:/ws: は、WireGuardトンネル内のノード(server-manager-api)へ
-		// 平文HTTP/WSで到達するために許可している(トンネル自体で暗号化されている前提。V1の暫定方針)。
+		protocol.handle("app", (req) => {
+			const url = new URL(req.url);
+			if (url.hostname !== "server-manager") {
+				return new Response("Not found", { status: 404 });
+			}
+			let filePath = url.pathname;
+			if (filePath === "/" || filePath === "") {
+				filePath = "/index.html";
+			}
+			const rendererPath = path.join(__dirname, "../renderer", filePath);
+			return net.fetch(pathToFileURL(rendererPath).toString());
+		});
+
 		const csp = is.dev
 			? "default-src 'self' http://localhost:* ws://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;"
-			: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;";
+			: "default-src 'self' app://server-manager; script-src 'self' app://server-manager; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;";
 
 		session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 			callback({
