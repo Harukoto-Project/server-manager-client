@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@renderer/components/ui/button";
 import {
-	NodeApiError,
 	fetchAuthStatus,
 	fetchLoginOptions,
 	fetchRecoverOptions,
@@ -31,11 +30,25 @@ export function NodeAuthPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 	const [recoveryInput, setRecoveryInput] = useState("");
+	const [originWarning, setOriginWarning] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!node) return;
 		fetchAuthStatus(node).then((status) => {
 			if (status.passkeyCount === 0) setMode("setup");
+			if (status.expectedOrigin) {
+				const currentOrigin = window.location.origin;
+				const isLocalhostOrigin = (o: string) =>
+					o === "http://localhost" || /^http:\/\/localhost:\d+$/.test(o);
+				const bothLocalhost = isLocalhostOrigin(currentOrigin) && isLocalhostOrigin(status.expectedOrigin);
+				if (!bothLocalhost && currentOrigin !== status.expectedOrigin) {
+					setOriginWarning(
+						`オリジン不一致: クライアント="${currentOrigin}" / サーバー期待値="${status.expectedOrigin}"` +
+						` (rpId="${status.rpId ?? "?"}")。` +
+						` APIサーバーの WEBAUTHN_ORIGIN と WEBAUTHN_RP_ID を現在の環境に合わせてください。`,
+					);
+				}
+			}
 		}).catch(() => {});
 	}, [node]);
 
@@ -59,8 +72,10 @@ export function NodeAuthPage() {
 		} catch (err) {
 			if (err instanceof Error && err.name === "NotAllowedError") {
 				setError("パスキー認証がキャンセルされました。");
+			} else if (err instanceof Error) {
+				setError(`[${err.name}] ${err.message}`);
 			} else {
-				setError(err instanceof NodeApiError ? err.message : "認証中にエラーが発生しました。");
+				setError("認証中に不明なエラーが発生しました。");
 			}
 		} finally {
 			setLoading(false);
@@ -88,8 +103,10 @@ export function NodeAuthPage() {
 		} catch (err) {
 			if (err instanceof Error && err.name === "NotAllowedError") {
 				setError("パスキー操作がキャンセルされました。");
+			} else if (err instanceof Error) {
+				setError(`[${err.name}] ${err.message}`);
 			} else {
-				setError(err instanceof NodeApiError ? err.message : "セットアップ中にエラーが発生しました。");
+				setError("セットアップ中に不明なエラーが発生しました。");
 			}
 		} finally {
 			setLoading(false);
@@ -114,8 +131,10 @@ export function NodeAuthPage() {
 		} catch (err) {
 			if (err instanceof Error && err.name === "NotAllowedError") {
 				setError("パスキー操作がキャンセルされました。");
+			} else if (err instanceof Error) {
+				setError(`[${err.name}] ${err.message}`);
 			} else {
-				setError(err instanceof NodeApiError ? err.message : "リカバリー中にエラーが発生しました。");
+				setError("リカバリー中に不明なエラーが発生しました。");
 			}
 		} finally {
 			setLoading(false);
@@ -124,6 +143,13 @@ export function NodeAuthPage() {
 
 	return (
 		<div className="flex h-full flex-col items-center justify-center gap-8 bg-background px-4">
+			{originWarning && (
+				<div className="w-full max-w-sm rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
+					<span className="font-semibold">WebAuthn 設定の不一致</span>
+					<br />
+					{originWarning}
+				</div>
+			)}
 			<div className="flex flex-col items-center gap-2 text-center">
 				<div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
 					{mode === "setup" ? <ShieldCheck className="h-7 w-7" /> : <Fingerprint className="h-7 w-7" />}

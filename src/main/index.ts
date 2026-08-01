@@ -1,14 +1,52 @@
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import { BrowserWindow, app, dialog, ipcMain, net, protocol, session, shell } from "electron";
+import { BrowserWindow, app, dialog, ipcMain, session, shell } from "electron";
+import fs from "node:fs";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { consolidateAppPaths } from "./paths.js";
 
 const rootDir = consolidateAppPaths();
 
-protocol.registerSchemesAsPrivileged([
-	{ scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
-]);
+const MIME: Record<string, string> = {
+	".html": "text/html",
+	".js": "application/javascript",
+	".css": "text/css",
+	".svg": "image/svg+xml",
+	".png": "image/png",
+	".ico": "image/x-icon",
+	".woff2": "font/woff2",
+	".woff": "font/woff",
+	".ttf": "font/ttf",
+	".json": "application/json",
+	".map": "application/json",
+};
+
+function startLocalServer(distPath: string): Promise<number> {
+	return new Promise((resolve, reject) => {
+		const server = http.createServer((req, res) => {
+			const urlPath = (req.url ?? "/").split("?")[0];
+			let filePath = path.join(distPath, urlPath === "/" ? "index.html" : urlPath);
+			if (!fs.existsSync(filePath)) {
+				filePath = path.join(distPath, "index.html");
+			}
+			const ext = path.extname(filePath);
+			const contentType = MIME[ext] ?? "application/octet-stream";
+			try {
+				const content = fs.readFileSync(filePath);
+				res.writeHead(200, { "Content-Type": contentType });
+				res.end(content);
+			} catch {
+				res.writeHead(404);
+				res.end("Not found");
+			}
+		});
+		server.listen(0, "127.0.0.1", () => {
+			resolve((server.address() as AddressInfo).port);
+		});
+		server.on("error", reject);
+	});
+}
 
 function normalizeElectronFingerprint(fingerprint: string): string {
 	if (fingerprint.startsWith("sha256/")) {
@@ -30,6 +68,7 @@ async function bootstrap() {
 	registerIpcHandlers(ipcMain, config, secureStore);
 
 	const mismatchAlertedNodes = new Set<string>();
+	let appURL = "";
 
 	app.on("certificate-error", (event, _webContents, url, _error, certificate, callback) => {
 		event.preventDefault();
@@ -114,11 +153,7 @@ async function bootstrap() {
 			return { action: "deny" };
 		});
 
-		if (is.dev && process.env.ELECTRON_RENDERER_URL) {
-			mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
-		} else {
-			mainWindow.loadURL("app://server-manager.hrkt.org/index.html");
-		}
+		mainWindow.loadURL(appURL);
 
 		if (!autoUpdaterInitialized) {
 			autoUpdaterInitialized = true;
@@ -126,25 +161,20 @@ async function bootstrap() {
 		}
 	}
 
-	app.whenReady().then(() => {
+	app.whenReady().then(async () => {
 		electronApp.setAppUserModelId("com.harukoto-project.server-manager");
 
-		protocol.handle("app", (req) => {
-			const url = new URL(req.url);
-			if (url.hostname !== "server-manager.hrkt.org") {
-				return new Response("Not found", { status: 404 });
-			}
-			let filePath = url.pathname;
-			if (filePath === "/" || filePath === "") {
-				filePath = "/index.html";
-			}
-			const rendererPath = path.join(__dirname, "../renderer", filePath);
-			return net.fetch(pathToFileURL(rendererPath).toString());
-		});
+		if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+			appURL = process.env.ELECTRON_RENDERER_URL;
+		} else {
+			const distPath = path.join(__dirname, "../renderer");
+			const port = await startLocalServer(distPath);
+			appURL = `http://localhost:${port}`;
+		}
 
 		const csp = is.dev
 			? "default-src 'self' http://localhost:* ws://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;"
-			: "default-src 'self' app://server-manager.hrkt.org; script-src 'self' app://server-manager.hrkt.org; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;";
+			: "default-src 'self' http://localhost:*; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;";
 
 		session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 			callback({
