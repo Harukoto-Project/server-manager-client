@@ -51,12 +51,22 @@ export async function setupAutoUpdater(mainWindow: BrowserWindow): Promise<void>
 	});
 
 	ipcMain.handle("updater:check-for-updates", async () => {
-		await autoUpdater.checkForUpdates();
+		const timeout = new Promise<never>((_, reject) =>
+			setTimeout(() => reject(new Error("更新確認がタイムアウトしました。ネットワーク接続を確認してください。")), 30_000),
+		);
+		await Promise.race([autoUpdater.checkForUpdates(), timeout]).catch((err: unknown) => {
+			send({ type: "error", message: err instanceof Error ? err.message : String(err) });
+		});
 	});
 
 	ipcMain.handle("updater:quit-and-install", () => {
 		autoUpdater.quitAndInstall();
 	});
 
-	await autoUpdater.checkForUpdates();
+	const startupTimeout = new Promise<never>((_, reject) =>
+		setTimeout(() => reject(new Error("更新確認がタイムアウトしました。ネットワーク接続を確認してください。")), 30_000),
+	);
+	await Promise.race([autoUpdater.checkForUpdates(), startupTimeout]).catch((err: unknown) => {
+		send({ type: "error", message: err instanceof Error ? err.message : String(err) });
+	});
 }

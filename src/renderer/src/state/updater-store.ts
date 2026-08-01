@@ -31,6 +31,16 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
 	},
 	async checkForUpdates() {
 		set({ checking: true, updaterEvent: { type: "checking-for-update" } });
-		await window.api.updater.checkForUpdates();
+		try {
+			await window.api.updater.checkForUpdates();
+		} catch (err) {
+			set({
+				checking: false,
+				updaterEvent: {
+					type: "error",
+					message: err instanceof Error ? err.message : "更新の確認に失敗しました。",
+				},
+			});
+		}
 	},
 }));
