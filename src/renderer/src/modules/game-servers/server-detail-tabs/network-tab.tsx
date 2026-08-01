@@ -176,10 +176,10 @@ function AllocationRow({
 	return (
 		<div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card p-3">
 			<Network className="h-4 w-4 shrink-0 text-muted-foreground" />
-			<div className="min-w-0 flex-1">
-				<p className="font-mono text-sm font-medium">
-					{allocation.ipAlias ?? allocation.ip}:{allocation.port}
-				</p>
+			<div className="min-w-0 flex-1 truncate">
+			<p className="font-mono text-sm font-medium truncate">
+				{allocation.ipAlias ?? allocation.ip}:{allocation.port}
+			</p>
 				<div className="mt-1.5 flex items-center gap-2">
 					<input
 						value={notesValue}

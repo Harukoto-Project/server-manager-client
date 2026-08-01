@@ -74,12 +74,12 @@ export function StartupTab() {
 							<CardTitle className="text-sm">スタートアップコマンド</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-3">
-							<pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted/40 p-3 font-mono text-xs">
+							<pre className="whitespace-pre-wrap break-all rounded-md bg-muted/40 p-3 font-mono text-xs">
 								{startup.startupCommand || "(取得できませんでした)"}
 							</pre>
 							<div className="flex items-center gap-2 text-xs text-muted-foreground">
 								<span>Dockerイメージ:</span>
-								<span className="font-mono">{startup.dockerImage || "不明(権限が無いか取得できませんでした)"}</span>
+								<span className="font-mono break-all">{startup.dockerImage || "不明(権限が無いか取得できませんでした)"}</span>
 							</div>
 						</CardContent>
 					</Card>

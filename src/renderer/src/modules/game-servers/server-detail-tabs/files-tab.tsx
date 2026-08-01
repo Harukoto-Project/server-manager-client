@@ -246,7 +246,7 @@ export function FilesTab() {
 	const canDecompress = selectedNames.length === 1 && isArchiveFile(selectedNames[0]);
 
 	return (
-		<div className="flex flex-1 flex-col gap-3 overflow-hidden">
+		<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div>
 					<p className="text-sm font-medium">ファイル管理</p>
@@ -629,7 +629,7 @@ function FileEditorDialog({ node, token, identifier, filePath, onClose, onSaved 
 				if (!next) onClose();
 			}}
 		>
-			<DialogContent className="max-w-2xl">
+			<DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
 				<DialogHeader>
 					<DialogTitle className="break-all font-mono text-sm">{filePath}</DialogTitle>
 					<DialogDescription>ファイルの内容を編集できます。保存すると即座にサーバー上のファイルが上書きされます。</DialogDescription>
@@ -643,12 +643,12 @@ function FileEditorDialog({ node, token, identifier, filePath, onClose, onSaved 
 				)}
 
 				{content !== null && (
-					<textarea
-						value={content}
-						onChange={(e) => setContent(e.target.value)}
-						spellCheck={false}
-						className="h-96 w-full resize-none rounded-md border border-input bg-background p-3 font-mono text-xs"
-					/>
+				<textarea
+					value={content}
+					onChange={(e) => setContent(e.target.value)}
+					spellCheck={false}
+					className="flex-1 min-h-0 w-full resize-none rounded-md border border-input bg-background p-3 font-mono text-xs"
+				/>
 				)}
 
 				{error && <p className="text-sm text-destructive">{error}</p>}

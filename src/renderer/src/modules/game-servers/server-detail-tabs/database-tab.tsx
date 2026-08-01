@@ -188,7 +188,7 @@ function DatabaseRow({ database, onRotate, onDelete, rotatePending }: DatabaseRo
 					<p className="text-muted-foreground">パスワード</p>
 					{database.password ? (
 						<div className="flex items-center gap-1">
-							<span className="font-mono">{showPassword ? database.password : "••••••••"}</span>
+							<span className="font-mono break-all">{showPassword ? database.password : "••••••••"}</span>
 							<Button
 								size="icon"
 								variant="ghost"

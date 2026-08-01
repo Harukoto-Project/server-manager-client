@@ -194,7 +194,7 @@ function BackupRow({
 						{new Date(backup.createdAt).toLocaleString("ja-JP")} ・ {formatBytes(backup.bytes)}
 					</p>
 				</div>
-				<div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+				<div className="flex flex-wrap shrink-0 items-center gap-1.5">
 					{inProgress && <Badge variant="secondary">作成中...</Badge>}
 					{failed && <Badge variant="destructive">失敗</Badge>}
 					{!inProgress && backup.isSuccessful && <Badge variant="success">完了</Badge>}

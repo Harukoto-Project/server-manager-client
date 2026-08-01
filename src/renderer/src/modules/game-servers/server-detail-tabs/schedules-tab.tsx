@@ -207,7 +207,7 @@ export function SchedulesTab() {
 								</div>
 							</CardHeader>
 							<CardContent className="space-y-3">
-								<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+								<div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
 									<span>前回実行: {formatDateTime(schedule.lastRunAt)}</span>
 									<span>次回実行: {formatDateTime(schedule.nextRunAt)}</span>
 								</div>

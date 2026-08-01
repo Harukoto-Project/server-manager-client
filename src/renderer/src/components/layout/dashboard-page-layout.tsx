@@ -44,7 +44,7 @@ export function DashboardPageLayout({
 
 	return (
 		<div className="flex h-full flex-col overflow-hidden">
-			<header className="glass-toolbar sticky top-0 z-10 flex flex-wrap items-start justify-between gap-4 px-8 py-5 shadow-[0_1px_0_0_hsl(var(--border)/0.5)]">
+			<header className="glass-toolbar sticky top-0 z-10 flex flex-wrap items-start justify-between gap-4 px-4 sm:px-6 lg:px-8 py-5 shadow-[0_1px_0_0_hsl(var(--border)/0.5)]">
 				<div>
 					{backTo && (
 						<Link
@@ -62,7 +62,7 @@ export function DashboardPageLayout({
 
 			<div
 				className={cn(
-					"min-h-0 flex-1 px-8 py-6",
+					"min-h-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6",
 					useFlexFull ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto",
 				)}
 			>
