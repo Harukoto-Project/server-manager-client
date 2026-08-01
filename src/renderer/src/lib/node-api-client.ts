@@ -221,6 +221,8 @@ export async function fetchNodeHealth(node: NodeAddress): Promise<{ status: stri
 export interface AuthStatus {
 	registrationEnabled: boolean;
 	passkeyCount: number;
+	rpId?: string;
+	expectedOrigin?: string;
 }
 
 export async function fetchAuthStatus(node: NodeAddress): Promise<AuthStatus> {
