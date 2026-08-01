@@ -1,7 +1,8 @@
 import { Reorder } from "framer-motion";
-import { AlertCircle, Check, ClipboardCopy, Loader2, Pencil, Plus, Server, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertCircle, Check, ChevronDown, ChevronRight, ClipboardCopy, Loader2, Pencil, Plus, Server, ShieldCheck } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ConfirmDestructiveDialog } from "@renderer/components/common/confirm-destructive-dialog";
 import { ThemeToggle } from "@renderer/components/common/theme-toggle";
 import { Badge } from "@renderer/components/ui/badge";
@@ -413,6 +414,134 @@ function EditNodeDialog({ node }: { node: NodeEntry }) {
 	);
 }
 
+interface NodeMetrics {
+	cpu: number;
+	mem: number;
+}
+
+function barColor(percent: number): string {
+	if (percent >= 90) return "#ef4444";
+	if (percent >= 70) return "#f59e0b";
+	return "#22c55e";
+}
+
+function NodeMetricsCollector({
+	node,
+	onData,
+}: {
+	node: NodeEntry;
+	onData: (nodeId: string, data: NodeMetrics | null) => void;
+}) {
+	const summary = useNodeSummary(node);
+	const health = useNodeHealth(node);
+
+	useEffect(() => {
+		if (summary.data) {
+			onData(node.id, {
+				cpu: summary.data.cpu.loadPercent,
+				mem: summary.data.memory.usedPercent,
+			});
+		} else if (!summary.isLoading && (health.isError || summary.isError)) {
+			onData(node.id, null);
+		}
+	}, [summary.data, summary.isLoading, summary.isError, health.isError, node.id, onData]);
+
+	return null;
+}
+
+function AllNodesDashboard({ nodes }: { nodes: NodeEntry[] }) {
+	const [expanded, setExpanded] = useState(true);
+	const [metricsMap, setMetricsMap] = useState<Record<string, NodeMetrics | null>>({});
+
+	const handleData = useCallback((nodeId: string, data: NodeMetrics | null) => {
+		setMetricsMap((prev) => ({ ...prev, [nodeId]: data }));
+	}, []);
+
+	if (nodes.length < 2) return null;
+
+	const onlineCount = nodes.filter((n) => metricsMap[n.id] !== null && metricsMap[n.id] !== undefined).length;
+
+	const chartData = nodes.map((n) => ({
+		name: n.name,
+		cpu: metricsMap[n.id]?.cpu ?? null,
+		mem: metricsMap[n.id]?.mem ?? null,
+	}));
+
+	return (
+		<>
+			{nodes.map((n) => (
+				<NodeMetricsCollector key={n.id} node={n} onData={handleData} />
+			))}
+			<div className="rounded-xl border bg-card">
+				<button
+					type="button"
+					className="flex w-full items-center justify-between px-5 py-4 text-left"
+					onClick={() => setExpanded((v) => !v)}
+				>
+					<div className="flex items-center gap-3">
+						<span className="text-sm font-semibold">全体サマリー</span>
+						<span className="text-xs text-muted-foreground">
+							{onlineCount} / {nodes.length} ノード オンライン
+						</span>
+					</div>
+					{expanded ? (
+						<ChevronDown className="h-4 w-4 text-muted-foreground" />
+					) : (
+						<ChevronRight className="h-4 w-4 text-muted-foreground" />
+					)}
+				</button>
+
+				{expanded && (
+					<div className="grid grid-cols-1 gap-4 border-t px-5 pb-5 pt-4 sm:grid-cols-2">
+						<div>
+							<p className="mb-2 text-xs font-medium text-muted-foreground">CPU使用率 (%)</p>
+							<ResponsiveContainer width="100%" height={160}>
+								<BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -16 }}>
+									<XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+									<YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+									<Tooltip
+										formatter={(v) => (v == null ? "N/A" : `${(v as number).toFixed(1)}%`)}
+										contentStyle={{ fontSize: 12 }}
+									/>
+									<Bar dataKey="cpu" maxBarSize={48} radius={[3, 3, 0, 0]}>
+										{chartData.map((entry, i) => (
+											<Cell
+												key={i}
+												fill={entry.cpu === null ? "#94a3b8" : barColor(entry.cpu)}
+											/>
+										))}
+									</Bar>
+								</BarChart>
+							</ResponsiveContainer>
+						</div>
+						<div>
+							<p className="mb-2 text-xs font-medium text-muted-foreground">メモリ使用率 (%)</p>
+							<ResponsiveContainer width="100%" height={160}>
+								<BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -16 }}>
+									<XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+									<YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+									<Tooltip
+										formatter={(v) => (v == null ? "N/A" : `${(v as number).toFixed(1)}%`)}
+										contentStyle={{ fontSize: 12 }}
+									/>
+									<Bar dataKey="mem" maxBarSize={48} radius={[3, 3, 0, 0]}>
+										{chartData.map((entry, i) => (
+											<Cell
+												key={i}
+												fill={entry.mem === null ? "#94a3b8" : barColor(entry.mem)}
+											/>
+										))}
+									</Bar>
+								</BarChart>
+							</ResponsiveContainer>
+						</div>
+					</div>
+				)}
+			</div>
+		</>
+	);
+}
+
 function NodeStatusBadge({ node }: { node: NodeEntry }) {
 	const { isLoading, isError } = useNodeHealth(node);
 	if (isLoading) return <Badge variant="secondary">確認中...</Badge>;
@@ -480,6 +609,8 @@ export function NodesPage() {
 					</CardContent>
 				</Card>
 			)}
+
+			<AllNodesDashboard nodes={nodes} />
 
 			<Reorder.Group
 				axis="y"

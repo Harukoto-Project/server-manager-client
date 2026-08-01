@@ -6,6 +6,7 @@ import { minioModule } from "./minio";
 import { networkModule } from "./network";
 import { overviewModule } from "./overview";
 import { processManagerModule } from "./process-manager";
+import { sshKeysModule } from "./ssh-keys";
 import { storageModule } from "./storage";
 import { systemSettingsModule } from "./system-settings";
 import { systemdModule } from "./systemd";
@@ -30,6 +31,7 @@ export const moduleRegistry: ModuleDefinition[] = [
 	cursorUsageModule,
 	fileManagerModule,
 	minioModule,
+	sshKeysModule,
 ];
 
 export function getVisibleModules(): ModuleDefinition[] {

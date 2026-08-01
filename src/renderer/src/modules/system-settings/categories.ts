@@ -108,7 +108,7 @@ export const systemSettingsCategories: SystemSettingsCategory[] = [
 		icon: Fingerprint,
 		description: "パスワードなしでログインするための鍵情報を管理します。",
 		group: "account",
-		apiStatus: "none",
+		apiStatus: "ready",
 	},
 	{
 		id: "firewall",
