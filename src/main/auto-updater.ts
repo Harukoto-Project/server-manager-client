@@ -1,6 +1,7 @@
 import https from "node:https";
 import { is } from "@electron-toolkit/utils";
 import { type BrowserWindow, app, ipcMain } from "electron";
+import type { AppUpdater } from "electron-updater";
 import type { UpdaterEvent } from "../shared/updater-events.js";
 
 const GITHUB_OWNER = "Harukoto-Project";
@@ -32,7 +33,7 @@ export async function setupAutoUpdater(mainWindow: BrowserWindow): Promise<void>
 						Accept: "application/vnd.github+json",
 					},
 					timeout: 15_000,
-				},	
+				},
 				(res) => {
 					if (res.statusCode !== 200) {
 						reject(new Error(`GitHub API エラー: ${res.statusCode} ${res.statusMessage}`));
@@ -82,7 +83,7 @@ export async function setupAutoUpdater(mainWindow: BrowserWindow): Promise<void>
 
 			if (compareVersions(latestVersion, currentVersion) > 0) {
 				send({ type: "update-available", version: latestVersion });
-				if (!is.dev) void startElectronUpdaterDownload(send);
+				if (!is.dev) void startDownload(latestVersion);
 			} else {
 				send({ type: "update-not-available", version: currentVersion });
 			}
@@ -94,15 +95,32 @@ export async function setupAutoUpdater(mainWindow: BrowserWindow): Promise<void>
 		}
 	}
 
-	async function startElectronUpdaterDownload(
-		sendFn: (event: UpdaterEvent) => void,
-	): Promise<void> {
+	// electron-updater は prod のみ、一度だけインポートして参照を保持する
+	let cachedAutoUpdater: AppUpdater | null = null;
+
+	async function getAutoUpdater(): Promise<AppUpdater | null> {
+		if (is.dev) return null;
+		if (cachedAutoUpdater) return cachedAutoUpdater;
 		try {
-			const { autoUpdater } = await import("electron-updater");
-			autoUpdater.autoDownload = true;
+			const mod = await import("electron-updater");
+			cachedAutoUpdater = mod.autoUpdater;
+			return cachedAutoUpdater;
+		} catch {
+			return null;
+		}
+	}
+
+	async function startDownload(_version: string): Promise<void> {
+		const autoUpdater = await getAutoUpdater();
+		if (!autoUpdater) return;
+
+		try {
+			autoUpdater.autoDownload = false;
 			autoUpdater.autoInstallOnAppQuit = false;
+
+			autoUpdater.removeAllListeners();
 			autoUpdater.on("download-progress", (p) => {
-				sendFn({
+				send({
 					type: "download-progress",
 					percent: p.percent,
 					transferred: p.transferred,
@@ -111,39 +129,26 @@ export async function setupAutoUpdater(mainWindow: BrowserWindow): Promise<void>
 				});
 			});
 			autoUpdater.on("update-downloaded", (info) => {
-				sendFn({ type: "update-downloaded", version: info.version });
+				send({ type: "update-downloaded", version: info.version });
 			});
 			autoUpdater.on("error", (error) => {
-				sendFn({ type: "error", message: error.message });
+				send({ type: "error", message: error.message });
 			});
+
 			await autoUpdater.downloadUpdate();
 		} catch (err) {
-			sendFn({
+			send({
 				type: "error",
 				message: `ダウンロードエラー: ${err instanceof Error ? err.message : String(err)}`,
 			});
 		}
 	}
 
-	let doInstall: () => void = () => {};
-
-	const initPromise = is.dev
-		? Promise.resolve()
-		: import("electron-updater")
-				.then(({ autoUpdater }) => {
-					doInstall = () => autoUpdater.quitAndInstall();
-				})
-				.catch(() => {});
-
-	ipcMain.handle("updater:check-for-updates", async () => {
-		await initPromise;
-		await checkViaGitHubApi();
-	});
+	ipcMain.handle("updater:check-for-updates", () => checkViaGitHubApi());
 	ipcMain.handle("updater:quit-and-install", async () => {
-		await initPromise;
-		doInstall();
+		const autoUpdater = await getAutoUpdater();
+		autoUpdater?.quitAndInstall();
 	});
 
-	await initPromise;
 	setTimeout(() => void checkViaGitHubApi(), 4_000);
 }
