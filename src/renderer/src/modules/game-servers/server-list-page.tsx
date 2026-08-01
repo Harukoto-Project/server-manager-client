@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, ShieldCheck } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { EntityList, EntityListItem } from "@renderer/components/common/entity-list";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
+import { Button } from "@renderer/components/ui/button";
 import { Card, CardContent } from "@renderer/components/ui/card";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
 import { NodeApiError, fetchGameServers } from "@renderer/lib/node-api-client";
@@ -38,6 +39,11 @@ export function ServerListPage() {
 		<DashboardPageLayout
 			title="Minecraft / ゲームサーバー"
 			description="既存のPterodactylパネルでゲームサーバーを管理します。行をクリックするとサーバーの詳細ページに移動します。"
+			actions={
+				<Button size="sm" variant="outline" onClick={() => navigate("admin")}>
+					<ShieldCheck className="h-4 w-4" /> 管理者機能
+				</Button>
+			}
 		>
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 
