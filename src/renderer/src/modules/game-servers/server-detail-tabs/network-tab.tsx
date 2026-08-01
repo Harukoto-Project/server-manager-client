@@ -118,7 +118,7 @@ export function NetworkTab() {
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
 			<div className="flex items-center justify-between gap-3">
 				<p className="text-xs text-muted-foreground">
 					このサーバーに割り当てられているIPアドレス/ポートを確認・管理します。
@@ -131,19 +131,21 @@ export function NetworkTab() {
 			{statusMessage && <p className="text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-			<div className="space-y-2">
-				{allocationsQuery.data?.map((allocation) => (
-					<AllocationRow
-						key={allocation.id}
-						allocation={allocation}
-						pending={pendingId === allocation.id}
-						draftNotes={notesDraft[allocation.id]}
-						onDraftChange={(value) => setNotesDraft((prev) => ({ ...prev, [allocation.id]: value }))}
-						onSaveNotes={(notes) => handleSaveNotes(allocation.id, notes)}
-						onSetPrimary={() => handleSetPrimary(allocation.id)}
-						onUnassign={() => handleUnassign(allocation.id)}
-					/>
-				))}
+			<div className="min-h-0 flex-1 overflow-y-auto">
+				<div className="space-y-2">
+					{allocationsQuery.data?.map((allocation) => (
+						<AllocationRow
+							key={allocation.id}
+							allocation={allocation}
+							pending={pendingId === allocation.id}
+							draftNotes={notesDraft[allocation.id]}
+							onDraftChange={(value) => setNotesDraft((prev) => ({ ...prev, [allocation.id]: value }))}
+							onSaveNotes={(notes) => handleSaveNotes(allocation.id, notes)}
+							onSetPrimary={() => handleSetPrimary(allocation.id)}
+							onUnassign={() => handleUnassign(allocation.id)}
+						/>
+					))}
+				</div>
 			</div>
 		</div>
 	);

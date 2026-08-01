@@ -147,7 +147,7 @@ export function SchedulesTab() {
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
 			<div className="flex items-center justify-between gap-3">
 				<p className="text-xs text-muted-foreground">
 					定期実行スケジュールと、その中で実行するタスク(コマンド送信/電源操作/バックアップ作成)を管理します。
@@ -166,95 +166,97 @@ export function SchedulesTab() {
 			{statusMessage && <p className="text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-			<div className="space-y-3">
-				{schedulesQuery.data?.map((schedule) => (
-					<Card key={schedule.id}>
-						<CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0">
-							<div className="min-w-0">
-								<CardTitle className="flex items-center gap-2 text-sm">
-									<CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
-									{schedule.name}
-								</CardTitle>
-								<p className="mt-1 font-mono text-xs text-muted-foreground">{cronExpression(schedule.cron)}</p>
-							</div>
-							<div className="flex shrink-0 items-center gap-2">
-								<Badge variant={schedule.isActive ? "success" : "secondary"}>
-									{schedule.isActive ? "有効" : "無効"}
-								</Badge>
-								{schedule.isProcessing && <Badge variant="outline">実行中</Badge>}
-								<ScheduleFormDialog
-									mode="edit"
-									initial={schedule}
-									trigger={
-										<Button size="icon" variant="ghost" className="h-8 w-8">
-											<Pencil className="h-4 w-4" />
-										</Button>
-									}
-									onSubmit={(input) => handleUpdate(schedule.id, input)}
-								/>
-								<ConfirmDestructiveDialog
-									trigger={
-										<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-											<Trash2 className="h-4 w-4" />
-										</Button>
-									}
-									title={`${schedule.name} を削除しますか?`}
-									description="このスケジュールに含まれるタスクも全て削除されます。この操作は取り消せません。"
-									confirmLabel="削除する"
-									onConfirm={() => handleDelete(schedule.id)}
-								/>
-							</div>
-						</CardHeader>
-						<CardContent className="space-y-3">
-							<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-								<span>前回実行: {formatDateTime(schedule.lastRunAt)}</span>
-								<span>次回実行: {formatDateTime(schedule.nextRunAt)}</span>
-							</div>
-
-							<div className="space-y-2">
-								<div className="flex items-center justify-between">
-									<p className="text-xs font-medium text-muted-foreground">タスク</p>
-									<TaskFormDialog
+			<div className="min-h-0 flex-1 overflow-y-auto">
+				<div className="space-y-3">
+					{schedulesQuery.data?.map((schedule) => (
+						<Card key={schedule.id}>
+							<CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0">
+								<div className="min-w-0">
+									<CardTitle className="flex items-center gap-2 text-sm">
+										<CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
+										{schedule.name}
+									</CardTitle>
+									<p className="mt-1 font-mono text-xs text-muted-foreground">{cronExpression(schedule.cron)}</p>
+								</div>
+								<div className="flex shrink-0 items-center gap-2">
+									<Badge variant={schedule.isActive ? "success" : "secondary"}>
+										{schedule.isActive ? "有効" : "無効"}
+									</Badge>
+									{schedule.isProcessing && <Badge variant="outline">実行中</Badge>}
+									<ScheduleFormDialog
+										mode="edit"
+										initial={schedule}
 										trigger={
-											<Button size="sm" variant="outline">
-												<Plus className="h-3.5 w-3.5" /> タスクを追加
+											<Button size="icon" variant="ghost" className="h-8 w-8">
+												<Pencil className="h-4 w-4" />
 											</Button>
 										}
-										onSubmit={(input) => handleCreateTask(schedule.id, input)}
+										onSubmit={(input) => handleUpdate(schedule.id, input)}
+									/>
+									<ConfirmDestructiveDialog
+										trigger={
+											<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										}
+										title={`${schedule.name} を削除しますか?`}
+										description="このスケジュールに含まれるタスクも全て削除されます。この操作は取り消せません。"
+										confirmLabel="削除する"
+										onConfirm={() => handleDelete(schedule.id)}
 									/>
 								</div>
-								{schedule.tasks.length === 0 && (
-									<p className="text-xs text-muted-foreground">タスクはまだありません。</p>
-								)}
-								{schedule.tasks.map((task) => (
-									<div
-										key={task.id}
-										className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 text-sm"
-									>
-										<div className="min-w-0">
-											<p className="font-medium">{taskActionLabel(task.action)}</p>
-											<p className="truncate font-mono text-xs text-muted-foreground">
-												{task.action === "backup" ? "サーバー全体をバックアップ" : task.payload}
-												{task.timeOffset > 0 && ` (実行から${task.timeOffset}秒後)`}
-											</p>
-										</div>
-										<ConfirmDestructiveDialog
+							</CardHeader>
+							<CardContent className="space-y-3">
+								<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+									<span>前回実行: {formatDateTime(schedule.lastRunAt)}</span>
+									<span>次回実行: {formatDateTime(schedule.nextRunAt)}</span>
+								</div>
+
+								<div className="space-y-2">
+									<div className="flex items-center justify-between">
+										<p className="text-xs font-medium text-muted-foreground">タスク</p>
+										<TaskFormDialog
 											trigger={
-												<Button size="icon" variant="ghost" className="h-7 w-7">
-													<Trash2 className="h-3.5 w-3.5" />
+												<Button size="sm" variant="outline">
+													<Plus className="h-3.5 w-3.5" /> タスクを追加
 												</Button>
 											}
-											title="このタスクを削除しますか?"
-											description="スケジュール実行時にこのタスクは呼び出されなくなります。"
-											confirmLabel="削除する"
-											onConfirm={() => handleDeleteTask(schedule.id, task.id)}
+											onSubmit={(input) => handleCreateTask(schedule.id, input)}
 										/>
 									</div>
-								))}
-							</div>
-						</CardContent>
-					</Card>
-				))}
+									{schedule.tasks.length === 0 && (
+										<p className="text-xs text-muted-foreground">タスクはまだありません。</p>
+									)}
+									{schedule.tasks.map((task) => (
+										<div
+											key={task.id}
+											className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 text-sm"
+										>
+											<div className="min-w-0">
+												<p className="font-medium">{taskActionLabel(task.action)}</p>
+												<p className="truncate font-mono text-xs text-muted-foreground">
+													{task.action === "backup" ? "サーバー全体をバックアップ" : task.payload}
+													{task.timeOffset > 0 && ` (実行から${task.timeOffset}秒後)`}
+												</p>
+											</div>
+											<ConfirmDestructiveDialog
+												trigger={
+													<Button size="icon" variant="ghost" className="h-7 w-7">
+														<Trash2 className="h-3.5 w-3.5" />
+													</Button>
+												}
+												title="このタスクを削除しますか?"
+												description="スケジュール実行時にこのタスクは呼び出されなくなります。"
+												confirmLabel="削除する"
+												onConfirm={() => handleDeleteTask(schedule.id, task.id)}
+											/>
+										</div>
+									))}
+								</div>
+							</CardContent>
+						</Card>
+					))}
+				</div>
 			</div>
 		</div>
 	);

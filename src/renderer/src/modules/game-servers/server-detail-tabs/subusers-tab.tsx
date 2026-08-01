@@ -94,7 +94,7 @@ export function SubusersTab() {
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
 			<div className="flex items-center justify-between gap-3">
 				<p className="text-xs text-muted-foreground">
 					このサーバーを操作できる共同管理者(サブユーザー)を管理します。権限はサーバー単位で個別に設定されます。
@@ -113,59 +113,61 @@ export function SubusersTab() {
 			{statusMessage && <p className="text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-			<div className="space-y-2">
-				{subusersQuery.data?.map((subuser) => (
-					<div key={subuser.uuid} className="rounded-lg border bg-card p-4">
-						<div className="flex flex-wrap items-start justify-between gap-3">
-							<div className="flex min-w-0 items-center gap-3">
-								<UserRound className="h-4 w-4 shrink-0 text-muted-foreground" />
-								<div className="min-w-0">
-									<p className="truncate text-sm font-medium">{subuser.username ?? subuser.email}</p>
-									<p className="truncate text-xs text-muted-foreground">{subuser.email}</p>
+			<div className="min-h-0 flex-1 overflow-y-auto">
+				<div className="space-y-2">
+					{subusersQuery.data?.map((subuser) => (
+						<div key={subuser.uuid} className="rounded-lg border bg-card p-4">
+							<div className="flex flex-wrap items-start justify-between gap-3">
+								<div className="flex min-w-0 items-center gap-3">
+									<UserRound className="h-4 w-4 shrink-0 text-muted-foreground" />
+									<div className="min-w-0">
+										<p className="truncate text-sm font-medium">{subuser.username ?? subuser.email}</p>
+										<p className="truncate text-xs text-muted-foreground">{subuser.email}</p>
+									</div>
+									{subuser.twoFactorEnabled && (
+										<Badge variant="secondary" className="shrink-0">
+											<ShieldCheck className="mr-1 h-3 w-3" /> 2FA有効
+										</Badge>
+									)}
 								</div>
-								{subuser.twoFactorEnabled && (
-									<Badge variant="secondary" className="shrink-0">
-										<ShieldCheck className="mr-1 h-3 w-3" /> 2FA有効
-									</Badge>
+								<div className="flex shrink-0 items-center gap-2">
+									<SubuserFormDialog
+										mode="edit"
+										initialPermissions={subuser.permissions}
+										trigger={
+											<Button size="icon" variant="ghost" className="h-8 w-8">
+												<Pencil className="h-4 w-4" />
+											</Button>
+										}
+										onSubmit={(_email, permissions) => handleUpdatePermissions(subuser.uuid, permissions)}
+									/>
+									<ConfirmDestructiveDialog
+										trigger={
+											<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										}
+										title={`${subuser.username ?? subuser.email} を削除しますか?`}
+										description="このユーザーはこのサーバーを操作できなくなります。この操作は取り消せません。"
+										confirmLabel="削除する"
+										onConfirm={() => handleRemove(subuser.uuid)}
+									/>
+								</div>
+							</div>
+							<div className="mt-3 flex flex-wrap gap-1.5">
+								{subuser.permissions.length === 0 ? (
+									<span className="text-xs text-muted-foreground">権限が設定されていません</span>
+								) : (
+									subuser.permissions.map((permission) => (
+										<Badge key={permission} variant="outline" className="font-mono text-[10px]">
+											{permission}
+										</Badge>
+									))
 								)}
 							</div>
-							<div className="flex shrink-0 items-center gap-2">
-								<SubuserFormDialog
-									mode="edit"
-									initialPermissions={subuser.permissions}
-									trigger={
-										<Button size="icon" variant="ghost" className="h-8 w-8">
-											<Pencil className="h-4 w-4" />
-										</Button>
-									}
-									onSubmit={(_email, permissions) => handleUpdatePermissions(subuser.uuid, permissions)}
-								/>
-								<ConfirmDestructiveDialog
-									trigger={
-										<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-											<Trash2 className="h-4 w-4" />
-										</Button>
-									}
-									title={`${subuser.username ?? subuser.email} を削除しますか?`}
-									description="このユーザーはこのサーバーを操作できなくなります。この操作は取り消せません。"
-									confirmLabel="削除する"
-									onConfirm={() => handleRemove(subuser.uuid)}
-								/>
-							</div>
 						</div>
-						<div className="mt-3 flex flex-wrap gap-1.5">
-							{subuser.permissions.length === 0 ? (
-								<span className="text-xs text-muted-foreground">権限が設定されていません</span>
-							) : (
-								subuser.permissions.map((permission) => (
-									<Badge key={permission} variant="outline" className="font-mono text-[10px]">
-										{permission}
-									</Badge>
-								))
-							)}
-						</div>
-					</div>
-				))}
+					))}
+				</div>
 			</div>
 		</div>
 	);

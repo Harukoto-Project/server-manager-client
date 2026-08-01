@@ -60,9 +60,16 @@ export function DashboardPageLayout({
 				{actions && <div className="flex items-center gap-2">{actions}</div>}
 			</header>
 
-			<div className={cn("flex-1 px-8 py-6", useFlexFull ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto")}>
+			<div
+				className={cn(
+					"min-h-0 flex-1 px-8 py-6",
+					useFlexFull ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto",
+				)}
+			>
 				<div className={cn("flex gap-6", useFlexFull && "h-full flex-col lg:flex-row")}>
-					<div className={cn("flex-1", useFlexFull && "flex flex-col lg:h-full lg:overflow-y-auto", className)}>
+					<div
+						className={cn("min-h-0 flex-1", useFlexFull && "flex flex-col lg:h-full lg:overflow-y-auto", className)}
+					>
 						{children}
 					</div>
 					{inspector && (

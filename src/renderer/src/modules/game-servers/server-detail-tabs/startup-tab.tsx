@@ -56,7 +56,7 @@ export function StartupTab() {
 	const startup = startupQuery.data;
 
 	return (
-		<div className="flex flex-1 flex-col gap-4 overflow-y-auto">
+		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
 			<div>
 				<p className="text-sm font-medium">起動設定</p>
 				<p className="text-xs text-muted-foreground">
@@ -68,7 +68,7 @@ export function StartupTab() {
 			{actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
 			{startup && (
-				<>
+				<div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-sm">スタートアップコマンド</CardTitle>
@@ -102,7 +102,7 @@ export function StartupTab() {
 							))}
 						</CardContent>
 					</Card>
-				</>
+				</div>
 			)}
 		</div>
 	);

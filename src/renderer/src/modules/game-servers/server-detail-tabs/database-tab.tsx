@@ -82,7 +82,7 @@ export function DatabaseTab() {
 	const databases = databasesQuery.data ?? [];
 
 	return (
-		<div className="flex flex-1 flex-col gap-4">
+		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
 			<div className="flex items-start justify-between gap-3">
 				<div>
 					<p className="text-sm font-medium">データベース</p>
@@ -107,21 +107,23 @@ export function DatabaseTab() {
 			)}
 
 			{databases.length > 0 && (
-				<EntityList>
-					{databases.map((database) => (
-						<DatabaseRow
-							key={database.id}
-							database={database}
-							onRotate={async () => {
-								await rotateMutation.mutateAsync(database.id);
-							}}
-							onDelete={async () => {
-								await deleteMutation.mutateAsync(database.id);
-							}}
-							rotatePending={rotateMutation.isPending && rotateMutation.variables === database.id}
-						/>
-					))}
-				</EntityList>
+				<div className="min-h-0 flex-1 overflow-y-auto">
+					<EntityList>
+						{databases.map((database) => (
+							<DatabaseRow
+								key={database.id}
+								database={database}
+								onRotate={async () => {
+									await rotateMutation.mutateAsync(database.id);
+								}}
+								onDelete={async () => {
+									await deleteMutation.mutateAsync(database.id);
+								}}
+								rotatePending={rotateMutation.isPending && rotateMutation.variables === database.id}
+							/>
+						))}
+					</EntityList>
+				</div>
 			)}
 		</div>
 	);

@@ -105,7 +105,7 @@ export function BackupsTab() {
 	);
 
 	return (
-		<div className="flex flex-1 flex-col gap-4">
+		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
 			<div className="flex items-start justify-between gap-3">
 				<div>
 					<p className="text-sm font-medium">バックアップ</p>
@@ -130,29 +130,31 @@ export function BackupsTab() {
 			)}
 
 			{backups.length > 0 && (
-				<EntityList>
-					{backups.map((backup) => (
-						<BackupRow
-							key={backup.uuid}
-							backup={backup}
-							onDownload={async () => {
-								await downloadMutation.mutateAsync(backup.uuid);
-							}}
-							downloadPending={downloadMutation.isPending && downloadMutation.variables === backup.uuid}
-							onRestore={async () => {
-								await restoreMutation.mutateAsync(backup.uuid);
-							}}
-							restorePending={restoreMutation.isPending && restoreMutation.variables === backup.uuid}
-							onToggleLock={async () => {
-								await lockMutation.mutateAsync(backup.uuid);
-							}}
-							lockPending={lockMutation.isPending && lockMutation.variables === backup.uuid}
-							onDelete={async () => {
-								await deleteMutation.mutateAsync(backup.uuid);
-							}}
-						/>
-					))}
-				</EntityList>
+				<div className="min-h-0 flex-1 overflow-y-auto">
+					<EntityList>
+						{backups.map((backup) => (
+							<BackupRow
+								key={backup.uuid}
+								backup={backup}
+								onDownload={async () => {
+									await downloadMutation.mutateAsync(backup.uuid);
+								}}
+								downloadPending={downloadMutation.isPending && downloadMutation.variables === backup.uuid}
+								onRestore={async () => {
+									await restoreMutation.mutateAsync(backup.uuid);
+								}}
+								restorePending={restoreMutation.isPending && restoreMutation.variables === backup.uuid}
+								onToggleLock={async () => {
+									await lockMutation.mutateAsync(backup.uuid);
+								}}
+								lockPending={lockMutation.isPending && lockMutation.variables === backup.uuid}
+								onDelete={async () => {
+									await deleteMutation.mutateAsync(backup.uuid);
+								}}
+							/>
+						))}
+					</EntityList>
+				</div>
 			)}
 		</div>
 	);

@@ -6,6 +6,7 @@ import {
 	File as FileIcon,
 	FileArchive,
 	Folder,
+	FolderOpen,
 	FolderPlus,
 	Home,
 	Pencil,
@@ -134,7 +135,15 @@ export function FilesTab() {
 	const renameMutation = useMutation({
 		mutationFn: (input: { from: string; to: string }) =>
 			renameGameServerFile(node!, token!, identifier!, directory, [input]),
-		onSuccess: refreshList,
+		onSuccess: (_data, variables) => {
+			setSelected((prev) => {
+				if (!prev.has(variables.from)) return prev;
+				const next = new Set(prev);
+				next.delete(variables.from);
+				return next;
+			});
+			return refreshList();
+		},
 	});
 
 	const copyMutation = useMutation({
@@ -326,7 +335,12 @@ export function FilesTab() {
 			{statusMessage && <p className="text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-			{!statusMessage && files.length === 0 && <p className="text-sm text-muted-foreground">このフォルダは空です。</p>}
+			{!statusMessage && files.length === 0 && (
+				<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-10 text-muted-foreground">
+					<FolderOpen className="h-8 w-8" />
+					<p className="text-sm">このフォルダは空です。</p>
+				</div>
+			)}
 
 			{files.length > 0 && (
 				<div className="min-h-0 flex-1 overflow-y-auto rounded-md border">

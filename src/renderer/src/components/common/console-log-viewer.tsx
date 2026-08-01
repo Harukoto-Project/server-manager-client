@@ -45,13 +45,15 @@ export function ConsoleLogViewer({
 	}
 
 	return (
-		<div className={cn("relative rounded-lg border bg-black/90", fillHeight && "flex h-full flex-col", className)}>
+		<div
+			className={cn("relative rounded-lg border bg-black/90", fillHeight && "flex h-full min-h-0 flex-col", className)}
+		>
 			<div
 				ref={containerRef}
 				onScroll={handleScroll}
 				className={cn(
 					"no-scrollbar overflow-y-auto p-3 font-mono text-xs leading-relaxed text-emerald-300",
-					fillHeight ? "flex-1" : "h-72",
+					fillHeight ? "min-h-0 flex-1" : "h-72",
 				)}
 			>
 				{lines.length === 0 ? (
