@@ -1,4 +1,5 @@
 import { cursorUsageModule } from "./cursor-usage";
+import { fileManagerModule } from "./file-manager";
 import { dockerModule } from "./docker";
 import { gameServersModule } from "./game-servers";
 import { networkModule } from "./network";
@@ -26,6 +27,7 @@ export const moduleRegistry: ModuleDefinition[] = [
 	processManagerModule,
 	terminalModule,
 	cursorUsageModule,
+	fileManagerModule,
 ];
 
 export function getVisibleModules(): ModuleDefinition[] {

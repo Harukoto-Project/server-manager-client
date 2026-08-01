@@ -511,3 +511,75 @@ export async function fetchSystemSettingsUfwStatus(node: NodeAddress, token: str
 export function buildTerminalSessionUrl(node: NodeAddress, token: string): string {
 	return `${wsBaseUrl(node)}/terminal/session?token=${encodeURIComponent(token)}`;
 }
+
+// --- ファイルマネージャー ---
+
+export interface FileEntry {
+	name: string;
+	type: "file" | "directory";
+	size: number | null;
+	modifiedAt: string | null;
+	permissions: string | null;
+	path: string;
+}
+
+export interface FileListResult {
+	path: string;
+	items: FileEntry[];
+}
+
+export interface FileReadResult {
+	isBinary: boolean;
+	content: string | null;
+}
+
+export async function fetchFileList(node: NodeAddress, token: string, dirPath: string): Promise<FileListResult> {
+	const response = await authorizedFetch(
+		node,
+		token,
+		`/file-manager/list?path=${encodeURIComponent(dirPath)}`,
+	);
+	return response.json();
+}
+
+export async function readFile(node: NodeAddress, token: string, filePath: string): Promise<FileReadResult> {
+	const response = await authorizedFetch(
+		node,
+		token,
+		`/file-manager/read?path=${encodeURIComponent(filePath)}`,
+	);
+	return response.json();
+}
+
+export async function writeFile(node: NodeAddress, token: string, filePath: string, content: string): Promise<void> {
+	await authorizedFetch(node, token, "/file-manager/write", {
+		method: "POST",
+		body: { path: filePath, content },
+	});
+}
+
+export async function createDirectory(node: NodeAddress, token: string, dirPath: string): Promise<void> {
+	await authorizedFetch(node, token, "/file-manager/mkdir", {
+		method: "POST",
+		body: { path: dirPath },
+	});
+}
+
+export async function deleteFileOrDirectory(node: NodeAddress, token: string, targetPath: string): Promise<void> {
+	await authorizedFetch(node, token, "/file-manager/delete", {
+		method: "DELETE",
+		body: { path: targetPath },
+	});
+}
+
+export async function renameFileOrDirectory(
+	node: NodeAddress,
+	token: string,
+	oldPath: string,
+	newPath: string,
+): Promise<void> {
+	await authorizedFetch(node, token, "/file-manager/rename", {
+		method: "POST",
+		body: { oldPath, newPath },
+	});
+}
