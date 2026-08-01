@@ -117,7 +117,7 @@ async function bootstrap() {
 		if (is.dev && process.env.ELECTRON_RENDERER_URL) {
 			mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
 		} else {
-			mainWindow.loadURL("app://server-manager/index.html");
+			mainWindow.loadURL("app://server-manager.hrkt.org/index.html");
 		}
 
 		if (!autoUpdaterInitialized) {
@@ -131,7 +131,7 @@ async function bootstrap() {
 
 		protocol.handle("app", (req) => {
 			const url = new URL(req.url);
-			if (url.hostname !== "server-manager") {
+			if (url.hostname !== "server-manager.hrkt.org") {
 				return new Response("Not found", { status: 404 });
 			}
 			let filePath = url.pathname;
@@ -144,7 +144,7 @@ async function bootstrap() {
 
 		const csp = is.dev
 			? "default-src 'self' http://localhost:* ws://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;"
-			: "default-src 'self' app://server-manager; script-src 'self' app://server-manager; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;";
+			: "default-src 'self' app://server-manager.hrkt.org; script-src 'self' app://server-manager.hrkt.org; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:;";
 
 		session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 			callback({
