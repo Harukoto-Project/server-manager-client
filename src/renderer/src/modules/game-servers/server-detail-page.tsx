@@ -3,11 +3,10 @@ import { Play, RotateCw, Square } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { ConfirmDestructiveDialog } from "@renderer/components/common/confirm-destructive-dialog";
-import { ConsoleLogViewer } from "@renderer/components/common/console-log-viewer";
 import { DetailField } from "@renderer/components/common/detail-field";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Button } from "@renderer/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
 import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
 import {
 	type GameServerPowerSignal,
@@ -16,7 +15,28 @@ import {
 	gameServerPowerAction,
 } from "@renderer/lib/node-api-client";
 import { useNodesStore } from "@renderer/state/nodes-store";
+import { AdminTab } from "./server-detail-tabs/admin-tab";
+import { BackupsTab } from "./server-detail-tabs/backups-tab";
+import { DatabaseTab } from "./server-detail-tabs/database-tab";
+import { FilesTab } from "./server-detail-tabs/files-tab";
+import { NetworkTab } from "./server-detail-tabs/network-tab";
+import { OverviewTab } from "./server-detail-tabs/overview-tab";
+import { SchedulesTab } from "./server-detail-tabs/schedules-tab";
+import { StartupTab } from "./server-detail-tabs/startup-tab";
+import { SubusersTab } from "./server-detail-tabs/subusers-tab";
 import { ServerStateBadge } from "./shared";
+
+const SERVER_DETAIL_TABS = [
+	{ id: "overview", label: "概要", Component: OverviewTab },
+	{ id: "files", label: "ファイル管理", Component: FilesTab },
+	{ id: "database", label: "データベース", Component: DatabaseTab },
+	{ id: "backups", label: "バックアップ", Component: BackupsTab },
+	{ id: "schedules", label: "スケジュール", Component: SchedulesTab },
+	{ id: "subusers", label: "サブユーザー", Component: SubusersTab },
+	{ id: "network", label: "ネットワーク", Component: NetworkTab },
+	{ id: "startup", label: "起動設定", Component: StartupTab },
+	{ id: "admin", label: "サーバー管理", Component: AdminTab },
+] as const;
 
 export function ServerDetailPage() {
 	const { nodeId, identifier } = useParams<{ nodeId: string; identifier: string }>();
@@ -26,6 +46,7 @@ export function ServerDetailPage() {
 
 	const [pendingAction, setPendingAction] = useState<GameServerPowerSignal | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
+	const [activeTab, setActiveTab] = useState<string>("overview");
 
 	const ready = Boolean(node && token);
 
@@ -125,19 +146,20 @@ export function ServerDetailPage() {
 			{statusMessage && <p className="mb-4 text-sm text-muted-foreground">{statusMessage}</p>}
 			{actionError && <p className="mb-4 text-sm text-destructive">{actionError}</p>}
 
-			<Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
-				<CardHeader>
-					<CardTitle className="text-sm">コンソール</CardTitle>
-				</CardHeader>
-				<CardContent className="flex min-h-0 flex-1 flex-col pb-6">
-					<ConsoleLogViewer
-						fillHeight
-						className="h-full"
-						lines={[]}
-						emptyLabel="リアルタイムコンソールは今後の実装予定です"
-					/>
-				</CardContent>
-			</Card>
+			<Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 flex-1 flex-col">
+				<TabsList className="w-fit flex-wrap">
+					{SERVER_DETAIL_TABS.map((tab) => (
+						<TabsTrigger key={tab.id} value={tab.id}>
+							{tab.label}
+						</TabsTrigger>
+					))}
+				</TabsList>
+				{SERVER_DETAIL_TABS.map(({ id, Component }) => (
+					<TabsContent key={id} value={id} className="mt-4 flex min-h-0 flex-1 flex-col">
+						<Component />
+					</TabsContent>
+				))}
+			</Tabs>
 		</DashboardPageLayout>
 	);
 }
