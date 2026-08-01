@@ -1,5 +1,5 @@
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import { BrowserWindow, app, ipcMain, net, protocol, session, shell } from "electron";
+import { BrowserWindow, app, dialog, ipcMain, net, protocol, session, shell } from "electron";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { consolidateAppPaths } from "./paths.js";
@@ -10,6 +10,15 @@ protocol.registerSchemesAsPrivileged([
 	{ scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
 ]);
 
+function normalizeElectronFingerprint(fingerprint: string): string {
+	if (fingerprint.startsWith("sha256/")) {
+		const base64 = fingerprint.slice(7);
+		const hex = Buffer.from(base64, "base64").toString("hex").toUpperCase();
+		return (hex.match(/.{2}/g) ?? []).join(":");
+	}
+	return fingerprint.toUpperCase();
+}
+
 async function bootstrap() {
 	const { createConfigStore } = await import("./config-store.js");
 	const { SecureTokenStore } = await import("./secure-store.js");
@@ -19,6 +28,57 @@ async function bootstrap() {
 	const config = createConfigStore(rootDir);
 	const secureStore = new SecureTokenStore(rootDir);
 	registerIpcHandlers(ipcMain, config, secureStore);
+
+	const mismatchAlertedNodes = new Set<string>();
+
+	app.on("certificate-error", (event, _webContents, url, _error, certificate, callback) => {
+		event.preventDefault();
+
+		let urlHost: string;
+		let urlPort: number;
+		try {
+			const parsed = new URL(url);
+			urlHost = parsed.hostname;
+			urlPort = parsed.port ? parseInt(parsed.port, 10) : 443;
+		} catch {
+			callback(false);
+			return;
+		}
+
+		const nodes = config.get("nodes");
+		const node = nodes.find((n) => n.host === urlHost && n.port === urlPort && n.tlsEnabled);
+
+		if (!node?.certFingerprint) {
+			callback(false);
+			return;
+		}
+
+		const incoming = normalizeElectronFingerprint(certificate.fingerprint);
+		if (incoming === node.certFingerprint) {
+			callback(true);
+			return;
+		}
+
+		callback(false);
+
+		if (!mismatchAlertedNodes.has(node.id)) {
+			mismatchAlertedNodes.add(node.id);
+			void dialog
+				.showMessageBox({
+					type: "warning",
+					title: "セキュリティ警告 — 証明書不一致",
+					message: `ノード「${node.name}」の証明書が変わっています`,
+					detail:
+						"接続先の証明書が登録済みのフィンガープリントと一致しません。\n" +
+						"VPN (WireGuard) 経由で接続しているか確認してください。\n\n" +
+						"ノードが正規のものであれば、ノード編集画面から証明書フィンガープリントを更新してください。",
+					buttons: ["OK"],
+				})
+				.then(() => {
+					mismatchAlertedNodes.delete(node.id);
+				});
+		}
+	});
 
 	let autoUpdaterInitialized = false;
 

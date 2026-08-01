@@ -47,6 +47,10 @@ const api = {
 			return () => ipcRenderer.removeListener("updater:event", listener);
 		},
 	},
+	tls: {
+		getFingerprint: (host: string, port: number): Promise<string> =>
+			ipcRenderer.invoke("tls:get-fingerprint", host, port),
+	},
 };
 
 export type Api = typeof api;

@@ -1,5 +1,7 @@
 import { type IpcMain, app } from "electron";
+import https from "node:https";
 import { randomUUID } from "node:crypto";
+import type { TLSSocket } from "node:tls";
 import type { AppConfigSchema, NodeEntry } from "../shared/config-schema.js";
 import type { ConfigStore } from "./config-store.js";
 import type { SecureTokenStore } from "./secure-store.js";
@@ -91,4 +93,36 @@ export function registerIpcHandlers(ipcMain: IpcMain, config: ConfigStore, secur
 	ipcMain.handle("secure:get-token", (_event, nodeId: string) => secureStore.get(nodeId));
 
 	ipcMain.handle("secure:delete-token", (_event, nodeId: string) => secureStore.delete(nodeId));
+
+	ipcMain.handle("tls:get-fingerprint", (_event, host: string, port: number): Promise<string> => {
+		return new Promise((resolve, reject) => {
+			const req = https.request(
+				{
+					host,
+					port,
+					method: "GET",
+					path: "/health",
+					rejectUnauthorized: false,
+					timeout: 10000,
+				},
+				(res) => {
+					const cert = (res.socket as TLSSocket).getPeerCertificate();
+					if (!cert?.fingerprint256) {
+						req.destroy();
+						reject(new Error("サーバー証明書の取得に失敗しました。"));
+						return;
+					}
+					resolve(cert.fingerprint256.toUpperCase());
+					res.destroy();
+					req.destroy();
+				},
+			);
+			req.on("error", (err) => reject(err));
+			req.on("timeout", () => {
+				req.destroy();
+				reject(new Error("接続がタイムアウトしました。ホスト/ポートやネットワークを確認してください。"));
+			});
+			req.end();
+		});
+	});
 }
