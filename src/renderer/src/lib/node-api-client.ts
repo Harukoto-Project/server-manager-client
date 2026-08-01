@@ -338,7 +338,7 @@ export function isTokenExpired(token: string): boolean {
 }
 
 export interface AuthorizedFetchOptions {
-	method?: "GET" | "POST" | "DELETE";
+	method?: "GET" | "POST" | "PUT" | "DELETE";
 	body?: unknown;
 	signal?: AbortSignal;
 }

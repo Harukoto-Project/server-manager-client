@@ -1,3 +1,4 @@
+import { alertsModule } from "./alerts";
 import { cursorUsageModule } from "./cursor-usage";
 import { fileManagerModule } from "./file-manager";
 import { dockerModule } from "./docker";
@@ -32,6 +33,7 @@ export const moduleRegistry: ModuleDefinition[] = [
 	fileManagerModule,
 	minioModule,
 	sshKeysModule,
+	alertsModule,
 ];
 
 export function getVisibleModules(): ModuleDefinition[] {
