@@ -147,18 +147,18 @@ export function ServerDetailPage() {
 			{actionError && <p className="mb-4 text-sm text-destructive">{actionError}</p>}
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 flex-1 flex-col">
-				<TabsList className="w-full overflow-x-auto flex-nowrap">
+				<TabsList className="h-auto w-full flex-wrap justify-start gap-y-1">
 					{SERVER_DETAIL_TABS.map((tab) => (
 						<TabsTrigger key={tab.id} value={tab.id}>
 							{tab.label}
 						</TabsTrigger>
 					))}
 				</TabsList>
-				{SERVER_DETAIL_TABS.map(({ id, Component }) => (
-					<TabsContent key={id} value={id} className="mt-4 flex min-h-0 flex-1 flex-col">
-						<Component />
-					</TabsContent>
-				))}
+			{SERVER_DETAIL_TABS.map(({ id, Component }) => (
+				<TabsContent key={id} value={id} className="mt-4 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+					<Component />
+				</TabsContent>
+			))}
 			</Tabs>
 		</DashboardPageLayout>
 	);

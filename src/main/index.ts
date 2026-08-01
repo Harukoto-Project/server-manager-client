@@ -40,6 +40,7 @@ async function bootstrap() {
 			},
 		});
 
+		mainWindow.removeMenu();
 		mainWindow.on("ready-to-show", () => mainWindow.show());
 		mainWindow.on("resized", () => {
 			const [w, h] = mainWindow.getSize();
