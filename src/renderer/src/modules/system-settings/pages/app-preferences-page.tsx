@@ -12,14 +12,14 @@ import {
 	Sun,
 	Waves,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { DashboardPageLayout } from "@renderer/components/layout/dashboard-page-layout";
 import { Button } from "@renderer/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
 import { Switch } from "@renderer/components/ui/switch";
-import type { UpdaterEvent } from "../../../../../shared/updater-events";
 import { useAppPreferencesStore } from "@renderer/state/app-preferences-store";
+import { useUpdaterStore } from "@renderer/state/updater-store";
 import { type ThemePreference, useTheme } from "@renderer/theme/theme-provider";
 
 const THEME_OPTIONS: Array<{ value: ThemePreference; label: string; icon: typeof Sun }> = [
@@ -38,32 +38,11 @@ export function AppPreferencesPage() {
 	const { nodeId } = useParams<{ nodeId: string }>();
 	const { theme, setTheme } = useTheme();
 	const { preferences, loaded, load, update } = useAppPreferencesStore();
-
-	const [appVersion, setAppVersion] = useState<string | null>(null);
-	const [checking, setChecking] = useState(false);
-	const [updaterEvent, setUpdaterEvent] = useState<UpdaterEvent | null>(null);
+	const { appVersion, checking, updaterEvent, checkForUpdates } = useUpdaterStore();
 
 	useEffect(() => {
 		if (!loaded) void load();
 	}, [loaded, load]);
-
-	useEffect(() => {
-		void window.api.app.getVersion().then(setAppVersion);
-	}, []);
-
-	useEffect(() => {
-		const unsubscribe = window.api.updater.onEvent((event) => {
-			setUpdaterEvent(event);
-			if (event.type !== "checking-for-update") setChecking(false);
-		});
-		return unsubscribe;
-	}, []);
-
-	async function handleCheckForUpdates() {
-		setChecking(true);
-		setUpdaterEvent({ type: "checking-for-update" });
-		await window.api.updater.checkForUpdates();
-	}
 
 	const sidebarCollapsed = preferences?.sidebarCollapsed ?? false;
 	const reducedMotionOverride = preferences?.reducedMotionOverride ?? null;
@@ -157,7 +136,7 @@ export function AppPreferencesPage() {
 							variant="outline"
 							className="w-fit"
 							disabled={checking}
-							onClick={handleCheckForUpdates}
+							onClick={() => void checkForUpdates()}
 						>
 							{checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
 							アップデートを確認

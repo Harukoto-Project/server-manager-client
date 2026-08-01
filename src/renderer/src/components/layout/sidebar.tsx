@@ -1,11 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ArrowLeft, DownloadCloud, Info, PanelLeftClose, PanelLeftOpen, Server } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { MODULE_GROUP_LABEL, MODULE_GROUP_ORDER } from "@renderer/modules/types";
 import { getVisibleModules } from "@renderer/modules/registry";
+import { useNodeAccessToken } from "@renderer/hooks/use-node-access-token";
+import { fetchNodeHealth } from "@renderer/lib/node-api-client";
 import { cn } from "@renderer/lib/utils";
 import { useAppPreferencesStore } from "@renderer/state/app-preferences-store";
+import { useNodesStore } from "@renderer/state/nodes-store";
+import { useUpdaterStore } from "@renderer/state/updater-store";
 
 /**
  * サイドメニュー: モジュールregistryを描画するだけのシェル。
@@ -18,12 +23,26 @@ export function Sidebar() {
 	const navigate = useNavigate();
 	const modules = getVisibleModules();
 	const { preferences, loaded, load, update } = useAppPreferencesStore();
+	const { appVersion, updaterEvent } = useUpdaterStore();
+	const node = useNodesStore((s) => s.nodes.find((n) => n.id === nodeId));
+	const { data: token } = useNodeAccessToken(nodeId);
 
 	useEffect(() => {
 		if (!loaded) void load();
 	}, [loaded, load]);
 
+	const healthQuery = useQuery({
+		queryKey: ["api-update-health", nodeId],
+		queryFn: () => fetchNodeHealth(node!),
+		enabled: Boolean(node && token),
+		staleTime: 60_000,
+		refetchInterval: 5 * 60 * 1000,
+		retry: 1,
+	});
+
 	const collapsed = preferences?.sidebarCollapsed ?? false;
+	const clientUpdateReady = updaterEvent?.type === "update-downloaded";
+	const apiVersion = healthQuery.data?.version;
 
 	const grouped = MODULE_GROUP_ORDER.map((group) => ({
 		group,
@@ -94,6 +113,50 @@ export function Sidebar() {
 						</div>
 					</div>
 				))}
+			</div>
+
+			<div className="mt-2 flex flex-col gap-0.5 border-t border-border/60 pt-2">
+				<button
+					type="button"
+					title={
+						collapsed
+							? `サーバー管理アプリ v${appVersion ?? "?"}${clientUpdateReady ? "(更新あり)" : ""}`
+							: undefined
+					}
+					onClick={() => navigate(`/nodes/${nodeId}/system-settings/settings/app-preferences`)}
+					className={cn(
+						"flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+						collapsed && "justify-center",
+					)}
+				>
+					<span className="relative flex shrink-0 items-center justify-center">
+						{clientUpdateReady ? <DownloadCloud className="h-3.5 w-3.5 text-primary" /> : <Info className="h-3.5 w-3.5" />}
+						{clientUpdateReady && (
+							<span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-primary" />
+						)}
+					</span>
+					{!collapsed && (
+						<span className="truncate">
+							アプリ v{appVersion ?? "…"}
+							{clientUpdateReady && <span className="ml-1 text-primary">更新あり</span>}
+						</span>
+					)}
+				</button>
+
+				{nodeId && (
+					<button
+						type="button"
+						title={collapsed ? `接続中サーバー API v${apiVersion ?? "?"}` : undefined}
+						onClick={() => navigate(`/nodes/${nodeId}/system-settings/settings/api-update`)}
+						className={cn(
+							"flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+							collapsed && "justify-center",
+						)}
+					>
+						<Server className="h-3.5 w-3.5 shrink-0" />
+						{!collapsed && <span className="truncate">API v{apiVersion ?? "…"}</span>}
+					</button>
+				)}
 			</div>
 
 			<button

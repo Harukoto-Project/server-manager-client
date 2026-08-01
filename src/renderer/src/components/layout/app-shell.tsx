@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react";
 import { useLocation, useOutlet } from "react-router-dom";
 import { useNodesStore } from "@renderer/state/nodes-store";
+import { useUpdaterStore } from "@renderer/state/updater-store";
 import { Sidebar } from "./sidebar";
 
 /**
@@ -19,12 +20,18 @@ export function AppShell() {
 	const location = useLocation();
 	const outlet = useOutlet();
 	const { loaded, load } = useNodesStore();
+	const initUpdater = useUpdaterStore((s) => s.init);
 
 	// NodesPageを経由せず直接 /nodes/:id/... へ遷移した場合(再読み込み等)でも
 	// ノード一覧をロードしておく(overviewページ等がノード情報を必要とするため)。
 	useEffect(() => {
 		if (!loaded) void load();
 	}, [loaded, load]);
+
+	// クライアント更新イベントの購読はアプリ全体で一度だけ行う(サイドバーの常時表示のため)。
+	useEffect(() => {
+		initUpdater();
+	}, [initUpdater]);
 
 	return (
 		<div className="flex h-screen w-screen overflow-hidden bg-background">
