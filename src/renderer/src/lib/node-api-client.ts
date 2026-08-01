@@ -1,6 +1,7 @@
 export interface NodeAddress {
 	host: string;
 	port: number;
+	tlsEnabled?: boolean;
 }
 
 export interface MonitoringSnapshot {
@@ -181,11 +182,13 @@ export interface RegisterProcessManagerProjectInput {
 }
 
 export function baseUrl(node: NodeAddress): string {
-	return `http://${node.host}:${node.port}`;
+	const scheme = node.tlsEnabled ? "https" : "http";
+	return `${scheme}://${node.host}:${node.port}`;
 }
 
 function wsBaseUrl(node: NodeAddress): string {
-	return `ws://${node.host}:${node.port}`;
+	const scheme = node.tlsEnabled ? "wss" : "ws";
+	return `${scheme}://${node.host}:${node.port}`;
 }
 
 /**
@@ -475,6 +478,31 @@ export async function fetchSystemdUnitLogs(node: NodeAddress, token: string, uni
 	return logs.split("\n").filter((line) => line.length > 0);
 }
 
+export interface SystemdJournalFilter {
+	unit?: string;
+	priority?: string;
+	since?: string;
+	until?: string;
+	lines?: number;
+}
+
+export async function fetchSystemdJournal(
+	node: NodeAddress,
+	token: string,
+	filter: SystemdJournalFilter = {},
+): Promise<string[]> {
+	const params = new URLSearchParams();
+	if (filter.unit) params.set("unit", filter.unit);
+	if (filter.priority) params.set("priority", filter.priority);
+	if (filter.since) params.set("since", filter.since);
+	if (filter.until) params.set("until", filter.until);
+	if (filter.lines !== undefined) params.set("lines", String(filter.lines));
+	const qs = params.toString();
+	const response = await authorizedFetch(node, token, `/systemd/journal${qs ? `?${qs}` : ""}`);
+	const { logs } = (await response.json()) as { logs: string };
+	return logs.split("\n").filter((line) => line.length > 0);
+}
+
 // --- ゲームサーバー(Pterodactyl連携) ---
 
 export async function fetchGameServers(node: NodeAddress, token: string): Promise<GameServer[]> {
@@ -701,4 +729,43 @@ export async function renameFileOrDirectory(
 		method: "POST",
 		body: { oldPath, newPath },
 	});
+}
+
+// --- MinIO ---
+
+export interface MinioBucket {
+	name: string;
+	creationDate: string;
+}
+
+export interface MinioBucketInfo {
+	available: boolean;
+	name: string;
+	objectCount: number;
+	totalSizeBytes: number;
+}
+
+export async function fetchMinioStatus(
+	node: NodeAddress,
+	token: string,
+): Promise<{ available: boolean; online?: boolean }> {
+	const response = await authorizedFetch(node, token, "/minio/status");
+	return response.json();
+}
+
+export async function fetchMinioBuckets(
+	node: NodeAddress,
+	token: string,
+): Promise<{ available: boolean; buckets: MinioBucket[] }> {
+	const response = await authorizedFetch(node, token, "/minio/buckets");
+	return response.json();
+}
+
+export async function fetchMinioBucketInfo(
+	node: NodeAddress,
+	token: string,
+	bucketName: string,
+): Promise<MinioBucketInfo> {
+	const response = await authorizedFetch(node, token, `/minio/buckets/${encodeURIComponent(bucketName)}/info`);
+	return response.json();
 }

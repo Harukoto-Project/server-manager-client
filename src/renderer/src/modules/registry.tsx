@@ -2,6 +2,7 @@ import { cursorUsageModule } from "./cursor-usage";
 import { fileManagerModule } from "./file-manager";
 import { dockerModule } from "./docker";
 import { gameServersModule } from "./game-servers";
+import { minioModule } from "./minio";
 import { networkModule } from "./network";
 import { overviewModule } from "./overview";
 import { processManagerModule } from "./process-manager";
@@ -28,6 +29,7 @@ export const moduleRegistry: ModuleDefinition[] = [
 	terminalModule,
 	cursorUsageModule,
 	fileManagerModule,
+	minioModule,
 ];
 
 export function getVisibleModules(): ModuleDefinition[] {
